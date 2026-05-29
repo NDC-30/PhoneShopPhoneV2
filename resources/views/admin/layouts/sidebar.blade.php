@@ -13,7 +13,7 @@
             <i class="bi bi-box"></i> Sản Phẩm
         </a>
         </a>
-        <a href="#" class="nav-link">
+        <a href="{{ route('admin.orders.index') }}" class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
             <i class="bi bi-bag"></i> Đơn Hàng
         </a>
         <a href="#" class="nav-link">

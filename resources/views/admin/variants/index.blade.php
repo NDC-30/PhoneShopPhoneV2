@@ -19,182 +19,103 @@
     </div>
 
     <div class="row">
-    @forelse($variants as $variant)
+        @forelse($variants as $variant)
+        <div class="col-12 mb-2">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-2">
+                    <div class="d-flex align-items-start">
 
-    <div class="row">
-@forelse($variants as $variant)
-
-<div class="col-12 mb-2">
-
-    <div class="card shadow-sm border-0 rounded-3">
-
-        <div class="card-body p-2">
-
-            <div class="d-flex align-items-start">
-
-                {{-- IMAGE --}}
-                <div class="me-3">
-
-                    @if($variant->image)
-
-                        @php
-                            $isUrl = Str::startsWith($variant->image, ['http://', 'https://']);
-                            $imgSrc = $isUrl
-                                ? $variant->image
-                                : asset('storage/' . $variant->image);
-                        @endphp
-
-                        <img
-                            src="{{ $imgSrc }}"
-                            class="rounded-3 border"
-                            style="
-                                width: 110px;
-                                height: 90px;
-                                object-fit: contain;
-                                background: #fff;
-                            "
-                        >
-
-                    @else
-
-                        <div
-                            class="bg-light border rounded-3 d-flex align-items-center justify-content-center text-muted"
-                            style="
-                                width:110px;
-                                height:90px;
-                                font-size:12px;
-                            "
-                        >
-                            Không ảnh
-                        </div>
-
-                    @endif
-
-                </div>
-
-                {{-- INFO --}}
-                <div class="flex-grow-1">
-
-                    {{-- TOP --}}
-                    <div class="d-flex justify-content-between align-items-start">
-
-                        <div>
-
-                            <h6 class="text-danger fw-bold mb-1">
-                                {{ number_format($variant->price) }} VND
-                            </h6>
-
-                            <div class="small text-muted mb-1">
-                                SKU: {{ $variant->sku }}
-                            </div>
-
-                            <div class="small">
-                                Kho:
-                                <strong>{{ $variant->stock }}</strong>
-                            </div>
-
-                        </div>
-
-                        {{-- ACTION --}}
-                        <div class="d-flex gap-1">
-
-                            <a
-                                href="{{ route('admin.products.variants.edit', [$product->product_id, $variant->variant_id]) }}"
-                                class="btn btn-sm btn-outline-primary"
-                            >
-                                <i class="bi bi-pencil-square"></i>
-                            </a>
-
-                            <form
-                                action="{{ route('admin.products.variants.destroy', [$product->product_id, $variant->variant_id]) }}"
-                                method="POST"
-                                onsubmit="return confirm('Bạn chắc chắn muốn xóa?');"
-                            >
-                                @csrf
-                                @method('DELETE')
-
-                                <button
-                                    type="submit"
-                                    class="btn btn-sm btn-outline-danger"
+                        {{-- IMAGE --}}
+                        <div class="me-3">
+                            @if($variant->image)
+                                @php
+                                    $isUrl = Str::startsWith($variant->image, ['http://', 'https://']);
+                                    $imgSrc = $isUrl
+                                        ? $variant->image
+                                        : asset('storage/' . $variant->image);
+                                @endphp
+                                <img
+                                    src="{{ $imgSrc }}"
+                                    class="rounded-3 border"
+                                    style="width: 110px; height: 90px; object-fit: contain; background: #fff;"
                                 >
-                                    <i class="bi bi-trash"></i>
-                                </button>
-
-                            </form>
-
-                        </div>
-
-                    </div>
-
-                    {{-- SPECS --}}
-                    <div class="row mt-2">
-
-                        @forelse($variant->attributeValues->take(6) as $attrVal)
-
-                            <div class="col-md-4 col-6 mb-1">
-
+                            @else
                                 <div
-                                    class="small text-truncate"
-                                    title="{{ $attrVal->value }}"
+                                    class="bg-light border rounded-3 d-flex align-items-center justify-content-center text-muted"
+                                    style="width:110px; height:90px; font-size:12px;"
                                 >
-                                    <span class="fw-bold text-muted">
-                                        {{ $attrVal->attribute->name }}:
-                                    </span>
+                                    Không ảnh
+                                </div>
+                            @endif
+                        </div>
 
-                                    {{ $attrVal->value }}
+                        {{-- INFO --}}
+                        <div class="flex-grow-1">
+                            {{-- TOP --}}
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="text-danger fw-bold mb-1">
+                                        {{ number_format($variant->price) }} VND
+                                    </h6>
+                                    <div class="small text-muted mb-1">
+                                        SKU: {{ $variant->sku }}
+                                    </div>
+                                    <div class="small">
+                                        Kho: <strong>{{ $variant->stock }}</strong>
+                                    </div>
                                 </div>
 
+                                {{-- ACTION --}}
+                                <div class="d-flex gap-1">
+                                    <a
+                                        href="{{ route('admin.products.variants.edit', [$product->product_id, $variant->variant_id]) }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <form
+                                        action="{{ route('admin.products.variants.destroy', [$product->product_id, $variant->variant_id]) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Bạn chắc chắn muốn xóa?');"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
 
-                        @empty
-
-                            <div class="col-12">
-                                <span class="small text-muted">
-                                    Chưa có thông số kỹ thuật
-                                </span>
+                            {{-- SPECS --}}
+                            <div class="row mt-2">
+                                @forelse($variant->attributeValues->take(6) as $attrVal)
+                                    <div class="col-md-4 col-6 mb-1">
+                                        <div class="small text-truncate" title="{{ $attrVal->value }}">
+                                            <span class="fw-bold text-muted">
+                                                {{ $attrVal->attribute->name }}:
+                                            </span>
+                                            {{ $attrVal->value }}
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="col-12">
+                                        <span class="small text-muted">Chưa có thông số kỹ thuật</span>
+                                    </div>
+                                @endforelse
                             </div>
-
-                        @endforelse
-
+                        </div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
+        @empty
+        <div class="col-12 text-center py-5 text-muted">
+            <h5>Chưa có phiên bản nào</h5>
+            <p>Hãy thêm phiên bản cấu hình đầu tiên</p>
+        </div>
+        @endforelse
     </div>
-
-</div>
-
-@empty
-
-<div class="col-12 text-center py-5 text-muted">
-
-    <h5>Chưa có phiên bản nào</h5>
-
-    <p>Hãy thêm phiên bản cấu hình đầu tiên</p>
-
-</div>
-
-@endforelse
-</div>
-
-    @empty
-
-    <div class="col-12 text-center py-5 text-muted">
-
-        <h5>Chưa có phiên bản nào</h5>
-
-        <p>
-            Hãy thêm phiên bản cấu hình đầu tiên
-        </p>
-
-    </div>
-
-    @endforelse
-</div>
 </div>
 
 <div class="modal fade" id="addVariantModal" tabindex="-1">
@@ -209,8 +130,38 @@
                 <div class="modal-body bg-light">
                     
                     <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-white fw-bold text-primary">1. Thông tin Bán hàng & Hình ảnh</div>
+                        <div class="card-header bg-white fw-bold text-primary">1. Cấu hình & Bán hàng</div>
                         <div class="card-body row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label small fw-bold text-success">RAM *</label>
+                                <select name="specs[RAM]" class="form-select border-success" required>
+                                    <option value="">-- Chọn RAM --</option>
+                                    <option value="4 GB">4 GB</option>
+                                    <option value="6 GB">6 GB</option>
+                                    <option value="8 GB">8 GB</option>
+                                    <option value="12 GB">12 GB</option>
+                                    <option value="16 GB">16 GB</option>
+                                    <option value="24 GB">24 GB</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label small fw-bold text-success">Dung lượng lưu trữ (ROM) *</label>
+                                <select name="specs[Dung lượng lưu trữ (ROM)]" class="form-select border-success" required>
+                                    <option value="">-- Chọn ROM --</option>
+                                    <option value="64 GB">64 GB</option>
+                                    <option value="128 GB">128 GB</option>
+                                    <option value="256 GB">256 GB</option>
+                                    <option value="512 GB">512 GB</option>
+                                    <option value="1 TB">1 TB</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label small fw-bold text-success">Màu sắc phiên bản *</label>
+                                <input type="text" name="specs[Màu sắc]" class="form-control border-success" placeholder="VD: Titan Tự Nhiên" required>
+                            </div>
+
+                            <hr class="text-muted my-3">
+
                             <div class="col-md-3 mb-3">
                                 <label class="form-label small fw-bold">Giá bán (VND) *</label>
                                 <input type="number" name="price" class="form-control" required >
@@ -222,10 +173,6 @@
                             <div class="col-md-3 mb-3">
                                 <label class="form-label small fw-bold">Mã SKU</label>
                                 <input type="text" name="sku" class="form-control" placeholder="Để trống tự tạo">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label small fw-bold text-success">Màu sắc phiên bản *</label>
-                                <input type="text" name="specs[Màu sắc]" class="form-control border-success"  required>
                             </div>
 
                             <div class="col-md-6 mb-2 mt-2">
@@ -239,17 +186,16 @@
                         </div>
                     </div>
 
-                    <h6 class="fw-bold mb-3 text-primary">2. Bảng Thông Số Kỹ Thuật Đầy Đủ (Chuẩn Thế Giới Di Động)</h6>
+                    <h6 class="fw-bold mb-3 text-primary">2. Bảng Thông Số Kỹ Thuật Chi Tiết (Chuẩn TGDĐ)</h6>
                     
                     @php
+                        // Đã nhấc RAM và ROM lên trên, nên ở đây xóa đi để không bị trùng
                         $specGroups = [
                             'Cấu hình & Bộ nhớ' => [
                                 'Hệ điều hành' => 'VD: iOS 17, Android 14',
                                 'Chip xử lý (CPU)' => 'VD: Apple A17 Pro 6 nhân',
                                 'Tốc độ CPU' => 'VD: 3.78 GHz',
                                 'Chip đồ họa (GPU)' => 'VD: Apple GPU 6 nhân',
-                                'RAM' => 'VD: 8 GB, 12 GB',
-                                'Dung lượng lưu trữ (ROM)' => 'VD: 256 GB, 512 GB'
                             ],
                             'Camera & Màn hình' => [
                                 'Kích thước màn hình' => 'VD: 6.7 inch, 6.1 inch',
@@ -260,7 +206,7 @@
                                 'Mặt kính cảm ứng' => 'VD: Kính cường lực Ceramic Shield',
                                 'Camera sau' => 'VD: Chính 48 MP & Phụ 12 MP, 12 MP',
                                 'Quay phim sau' => 'VD: 4K 2160p@60fps, 1080p@60fps',
-                                'Tính năng camera sau' => 'VD: Ban đêm (Night Mode), Chống rung quang học (OIS), Zoom quang học',
+                                'Tính năng camera sau' => 'VD: Ban đêm, Chống rung quang học (OIS)',
                                 'Camera trước' => 'VD: 12 MP',
                                 'Tính năng camera trước' => 'VD: Quay video 4K, HDR, Xóa phông'
                             ],
@@ -268,12 +214,12 @@
                                 'Dung lượng pin' => 'VD: 4422 mAh, 5000 mAh',
                                 'Loại pin' => 'VD: Li-Ion',
                                 'Hỗ trợ sạc tối đa' => 'VD: 20 W, 25 W',
-                                'Công nghệ pin' => 'VD: Sạc pin nhanh, Sạc không dây MagSafe, Tiết kiệm pin'
+                                'Công nghệ pin' => 'VD: Sạc pin nhanh, Sạc không dây MagSafe'
                             ],
                             'Tiện ích' => [
-                                'Bảo mật nâng cao' => 'VD: Mở khoá khuôn mặt Face ID, Mở khóa vân tay dưới màn hình',
+                                'Bảo mật nâng cao' => 'VD: Mở khoá khuôn mặt Face ID, Vân tay dưới màn hình',
                                 'Tính năng đặc biệt' => 'VD: Dynamic Island, Loa kép, Phát hiện va chạm',
-                                'Kháng nước, bụi' => 'VD: IP68 (Kháng nước ở độ sâu 6 mét trong 30 phút)'
+                                'Kháng nước, bụi' => 'VD: IP68'
                             ],
                             'Kết nối' => [
                                 'Mạng di động' => 'VD: Hỗ trợ 5G',
