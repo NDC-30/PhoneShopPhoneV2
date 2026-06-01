@@ -1,0 +1,72 @@
+
+.hero-carousel .carousel-item img {
+    height: 450px;
+    object-fit: cover;
+    border-radius: 1rem;
+}
+
+.policy-card {
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+}
+.policy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.product-card {
+    transition: all 0.3s ease;
+    border-radius: 1.2rem;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+}
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    border-color: #0d6efd;
+}
+
+.product-img-wrapper {
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: #f8f9fa;
+    transition: all 0.3s;
+}
+.product-card:hover .product-img-wrapper img {
+    transform: scale(1.08); 
+}
+.product-img-wrapper img {
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.badge-hot {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 2;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+.btn-add-cart {
+    border-radius: 0.8rem;
+    font-weight: 600;
+    padding: 10px;
+    transition: all 0.3s;
+}
+
+@keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+.animate-bounce {
+    display: inline-block;
+    animation: bounce-subtle 2s infinite ease-in-out;
+}
