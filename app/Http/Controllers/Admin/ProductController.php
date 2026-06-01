@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    // 1. HIỂN THỊ DANH SÁCH
     public function index()
     {
         $products = Product::with(['category', 'brand'])
@@ -26,6 +27,7 @@ class ProductController extends Controller
         return view('admin.products.index', compact('products', 'categories', 'brands'));
     }
 
+    // 2. LƯU SẢN PHẨM MỚI (Khung code cũ của sếp - Xịn giữ nguyên)
     public function store(Request $request)
     {
         // 1. Lưu sản phẩm cha
@@ -71,5 +73,45 @@ class ProductController extends Controller
         }
 
         return redirect()->route('admin.products.index')->with('success', 'Thêm sản phẩm thành công!');
+    }
+
+    // 3. HIỂN THỊ FORM CẬP NHẬT (MỚI THÊM)
+    public function edit($id)
+    {
+        // Phải load kèm biến thể để mang ra view hiển thị
+        $product = Product::with('variants')->findOrFail($id); 
+        $categories = Category::all();
+        $brands = Brand::all();
+        
+        // Trả về file giao diện edit.blade.php
+        return view('admin.products.edit', compact('product', 'categories', 'brands'));
+    }
+
+    // 4. XỬ LÝ LƯU DỮ LIỆU CẬP NHẬT (MỚI THÊM)
+    public function update(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+        
+        $product->update([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'brand_id' => $request->brand_id,
+            'category_id' => $request->category_id,
+            'description' => $request->description,
+            'status' => $request->status ?? 1
+        ]);
+
+        return redirect()->route('admin.products.index')->with('success', 'Đã cập nhật sản phẩm thành công!');
+    }
+
+    // 5. XÓA SẢN PHẨM (MỚI THÊM)
+    public function destroy($id)
+    {
+        $product = Product::findOrFail($id);
+        
+        // Xóa sản phẩm cha (tùy thuộc vào CSDL mà sếp có cần xóa thủ công biến thể không)
+        $product->delete();
+
+        return redirect()->route('admin.products.index')->with('success', 'Đã xóa sản phẩm thành công!');
     }
 }

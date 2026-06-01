@@ -29,12 +29,12 @@
             <div class="card shadow-sm border-0 h-100 p-3">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-muted small text-uppercase fw-bold">Đơn Hàng</span>
+                        <span class="text-muted small text-uppercase fw-bold">Đơn Cần Xử Lý</span>
                         <h4 class="fw-bold my-2">{{ $totalOrders }}</h4>
                         @if($totalOrders > 0)
-                            <span class="text-info small fw-bold"><i class="bi bi-box-seam"></i> Đang xử lý</span>
+                            <span class="text-info small fw-bold"><i class="bi bi-box-seam"></i> Đang chờ đóng gói</span>
                         @else
-                            <span class="text-muted small fst-italic">Chờ đơn hàng đầu tiên</span>
+                            <span class="text-muted small fst-italic">Không có đơn tồn đọng</span>
                         @endif
                     </div>
                     <div class="text-info rounded p-3 fs-3 d-flex align-items-center justify-content-center" style="width:60px; height:60px; background-color:#e0f2fe;">
@@ -123,7 +123,7 @@
     <div class="card shadow-sm border-0 p-3">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h6 class="fw-bold text-secondary mb-0">Đơn Hàng Gần Đây</h6>
-            <a href="#" class="btn btn-sm btn-primary">Xem tất cả</a>
+            <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-primary">Xem tất cả</a>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -139,17 +139,19 @@
                 <tbody>
                     @forelse($recentOrders as $order)
                     <tr>
-                        <td><strong>#{{ $order->id ?? $order->order_id ?? 'N/A' }}</strong></td>
-                        <td>{{ $order->customer_name ?? 'Khách vãng lai' }}</td>
-                        <td>{{ isset($order->created_at) ? date('d/m/Y', strtotime($order->created_at)) : 'N/A' }}</td>
-                        <td class="text-danger fw-bold">{{ number_format($order->total_price ?? $order->total ?? $order->tong_tien ?? 0) }}đ</td>
+                        <td><strong>{{ $order->order_number ?? '#'.$order->order_id }}</strong></td>
+                        <td>{{ $order->receiver_name ?? 'Khách vãng lai' }}</td>
+                        <td>{{ date('d/m/Y', strtotime($order->created_at)) }}</td>
+                        <td class="text-danger fw-bold">{{ number_format($order->grand_total) }}đ</td>
                         <td>
-                            @if(isset($order->status) && $order->status == 'completed')
+                            @if($order->status == 'completed')
                                 <span class="badge bg-success">Thành công</span>
-                            @elseif(isset($order->status) && $order->status == 'pending')
+                            @elseif($order->status == 'pending')
                                 <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                            @elseif($order->status == 'cancelled')
+                                <span class="badge bg-danger">Đã hủy</span>
                             @else
-                                <span class="badge bg-secondary">Khác</span>
+                                <span class="badge bg-info text-dark">Đang xử lý</span>
                             @endif
                         </td>
                     </tr>
@@ -173,19 +175,19 @@
         const chartElement = document.getElementById('revenueChart');
         if(chartElement) {
             const ctx = chartElement.getContext('2d');
-            const dbData = {!! json_encode($chartData ?? [0,0,0,0,0,0]) !!};
+            const dbData = @json($chartData ?? []); // Render mảng 12 tháng từ Controller sang JS
 
             new Chart(ctx, {
-                type: 'line',
+                type: 'bar', // Đổi sang biểu đồ cột cho giống bên trang Doanh Thu
                 data: {
-                    labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'],
+                    labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
                     datasets: [{
                         label: 'Doanh thu (VND)',
                         data: dbData,
+                        backgroundColor: 'rgba(13, 110, 253, 0.8)',
                         borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        tension: 0.4,
-                        fill: true
+                        borderWidth: 1,
+                        borderRadius: 4
                     }]
                 },
                 options: {
