@@ -12,7 +12,7 @@ class Product extends Model
     public $timestamps = true;
 
     protected $fillable = ['name', 'slug', 'description', 'brand_id', 'category_id', 'is_featured', 'status'];
-
+    
     // 1 Sản phẩm có nhiều Biến thể
     public function variants() {
         return $this->hasMany(Variant::class, 'product_id', 'product_id');

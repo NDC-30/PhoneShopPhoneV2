@@ -116,6 +116,18 @@ Route::prefix('admin')
         Route::resource('categories', CategoryController::class);
         Route::resource('brands', BrandController::class);
         Route::resource('products', AdminProductController::class);
+
+// Đăng bán sản phẩm
+Route::post(
+    '/products/{id}/publish',
+    [AdminProductController::class, 'publish']
+)->name('products.publish');
+
+// Dừng bán sản phẩm
+Route::post(
+    '/products/{id}/unpublish',
+    [AdminProductController::class, 'unpublish']
+)->name('products.unpublish');
         Route::resource('orders', OrderController::class);
         Route::resource('vouchers', VoucherController::class);
 
