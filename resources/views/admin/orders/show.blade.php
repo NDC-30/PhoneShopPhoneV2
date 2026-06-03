@@ -4,7 +4,6 @@
 
 @section('content')
 <style>
-    /* Thanh tiến trình đơn hàng */
     .order-track { position: relative; display: flex; justify-content: space-between; margin: 30px 0; padding: 0 20px; }
     .order-track::before { content: ''; position: absolute; top: 18px; left: 40px; right: 40px; height: 3px; background: #e9ecef; z-index: 1; }
     .track-step { position: relative; z-index: 2; text-align: center; width: 25%; }
@@ -51,24 +50,28 @@
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
-            @if($order->status == 'cancelled')
+            @if(in_array($order->status, ['cancelled', 'returned']))
                 <div class="text-center py-3">
-                    <h4 class="text-danger fw-bold mb-0"><i class="bi bi-x-circle"></i> ĐƠN HÀNG ĐÃ BỊ HỦY</h4>
-                    <p class="text-muted mt-2">Dữ liệu sản phẩm đã được hoàn lại vào kho.</p>
+                    @if($order->status == 'returned')
+                        <h4 class="text-purple fw-bold mb-0" style="color:#7c3aed"><i class="bi bi-arrow-counterclockwise"></i> ĐƠN HÀNG ĐÃ HOÀN TRẢ</h4>
+                    @else
+                        <h4 class="text-danger fw-bold mb-0"><i class="bi bi-x-circle"></i> ĐƠN HÀNG ĐÃ BỊ HỦY</h4>
+                    @endif
+                    <p class="text-muted mt-2">Sản phẩm đã được hoàn lại vào kho.</p>
                 </div>
             @else
                 <div class="order-track">
                     <div class="track-step {{ in_array($order->status, ['pending', 'processing', 'shipping', 'completed']) ? 'completed' : '' }}">
                         <div class="track-icon"><i class="bi bi-receipt"></i></div>
-                        <div class="track-title">Chờ Duyệt</div>
+                        <div class="track-title">Chờ Xác Nhận</div>
                     </div>
                     <div class="track-step {{ in_array($order->status, ['processing', 'shipping', 'completed']) ? 'completed' : '' }} {{ $order->status == 'processing' ? 'active' : '' }}">
                         <div class="track-icon"><i class="bi bi-box-seam"></i></div>
-                        <div class="track-title">Đóng Gói</div>
+                        <div class="track-title">Đã Xác Nhận</div>
                     </div>
                     <div class="track-step {{ in_array($order->status, ['shipping', 'completed']) ? 'completed' : '' }} {{ $order->status == 'shipping' ? 'active' : '' }}">
                         <div class="track-icon"><i class="bi bi-truck"></i></div>
-                        <div class="track-title">Giao Hàng</div>
+                        <div class="track-title">Đang Giao</div>
                     </div>
                     <div class="track-step {{ $order->status == 'completed' ? 'completed active' : '' }}">
                         <div class="track-icon"><i class="bi bi-check-lg"></i></div>
@@ -128,14 +131,14 @@
                         @csrf @method('PUT')
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label small fw-bold">Trạng thái hiện tại</label>
-                                <select name="status" class="form-select border-primary fw-bold text-primary" {{ $order->status == 'completed' ? 'disabled' : '' }}>
+                                <label class="form-label small fw-bold">Cập nhật trạng thái</label>
+                                <select name="status" class="form-select border-primary fw-bold text-primary">
                                     @if($order->status == 'pending')
-                                        <option value="pending" selected>Chờ duyệt</option>
-                                        <option value="processing">Xác nhận & Đóng gói</option>
+                                        <option value="pending" selected>Chờ xác nhận</option>
+                                        <option value="processing">Xác nhận đơn (Đóng gói)</option>
                                         <option value="cancelled">Hủy Đơn</option>
                                     @elseif($order->status == 'processing')
-                                        <option value="processing" selected>Đang xử lý (Đóng gói)</option>
+                                        <option value="processing" selected>Đã xác nhận (Đang đóng gói)</option>
                                         <option value="shipping">Bắt đầu Giao hàng</option>
                                         <option value="cancelled">Hủy Đơn</option>
                                     @elseif($order->status == 'shipping')
@@ -144,14 +147,15 @@
                                         <option value="cancelled">Giao Thất Bại (Hoàn Hàng)</option>
                                     @elseif($order->status == 'completed')
                                         <option value="completed" selected>Đã Hoàn Thành</option>
+                                        <option value="returned">Khách Hoàn Trả</option>
+                                    @elseif($order->status == 'returned')
+                                        <option value="returned" selected>Đã Hoàn Trả</option>
+                                        <option value="completed">Khôi phục (Hoàn Thành)</option>
                                     @elseif($order->status == 'cancelled')
                                         <option value="cancelled" selected>Đã Hủy Đơn</option>
-                                        <option value="pending">Khôi phục (Về Chờ duyệt)</option>
+                                        <option value="pending">Khôi phục (Về Chờ xác nhận)</option>
                                     @endif
                                 </select>
-                                @if($order->status == 'completed')
-                                    <input type="hidden" name="status" value="completed">
-                                @endif
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label small fw-bold">Đơn vị vận chuyển</label>
@@ -168,7 +172,7 @@
                             </div>
                         </div>
                         <div class="text-end mt-2">
-                            <button type="submit" class="btn btn-primary px-4" {{ $order->status == 'completed' ? 'disabled' : '' }}>
+                            <button type="submit" class="btn btn-primary px-4">
                                 <i class="bi bi-save me-1"></i> Lưu Thay Đổi
                             </button>
                         </div>
@@ -218,11 +222,16 @@
                         <span class="fw-bold">Khách Cần Trả:</span>
                         <strong class="text-danger fs-4">{{ number_format($order->grand_total) }}đ</strong>
                     </div>
-                    
+
                     <div class="bg-light p-2 rounded text-center border">
                         <span class="small text-muted d-block mb-1">Phương thức thanh toán</span>
-                        @if($order->payment_method == 'COD')
-                            <span class="badge bg-secondary px-3 py-2"><i class="bi bi-cash"></i> Thanh toán khi nhận hàng (COD)</span>
+                        @php $pm = strtolower($order->payment_method ?? ''); @endphp
+                        @if(in_array($pm, ['cod', 'cash']))
+                            <span class="badge bg-secondary px-3 py-2"><i class="bi bi-cash"></i> {{ $pm === 'cash' ? 'Tiền mặt (tại quầy)' : 'Thanh toán khi nhận hàng (COD)' }}</span>
+                        @elseif($pm === 'vnpay')
+                            <span class="badge bg-primary px-3 py-2"><i class="bi bi-qr-code"></i> VNPay</span>
+                        @elseif($pm === 'visa')
+                            <span class="badge bg-primary px-3 py-2"><i class="bi bi-credit-card"></i> Thẻ Visa/Mastercard</span>
                         @else
                             <span class="badge bg-info px-3 py-2"><i class="bi bi-bank"></i> Chuyển khoản ngân hàng</span>
                         @endif

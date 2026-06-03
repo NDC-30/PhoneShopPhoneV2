@@ -38,4 +38,12 @@ class Variant extends Model
     public function getLabelAttribute() {
         return $this->attributeValues->pluck('value')->implode(' · ') ?: $this->sku;
     }
+
+    // Nhãn NGẮN cho giỏ hàng/đơn hàng: chỉ các thuộc tính được tích "filterable"
+    // (thường là Màu sắc / RAM / Dung lượng). Nếu không có thì lùi về label đầy đủ.
+    public function getShortLabelAttribute() {
+        $vals = $this->attributeValues->filter(fn ($av) => optional($av->attribute)->filterable);
+        if ($vals->isEmpty()) $vals = $this->attributeValues->take(3);
+        return $vals->pluck('value')->implode(' · ') ?: $this->sku;
+    }
 }

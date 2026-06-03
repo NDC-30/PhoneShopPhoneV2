@@ -80,14 +80,15 @@
                         </div>
                     </label>
 
-                    <label class="pay-opt" id="opt-bank">
-                        <input type="radio" name="payment_method" value="bank"
-                               onchange="pickPay('bank')">
+                    <label class="pay-opt" id="opt-vnpay">
+                        <input type="radio" name="payment_method" value="vnpay"
+                               onchange="pickPay('vnpay')">
                         <div>
-                            <div class="pi">Chuyển khoản ngân hàng</div>
-                            <div class="pd-sub">Thông tin chuyển khoản sẽ gửi sau khi đặt</div>
+                            <div class="pi">Thanh toán qua VNPay</div>
+                            <div class="pd-sub">Thẻ ATM / Visa / QR — chuyển sang cổng VNPay để thanh toán</div>
                         </div>
                     </label>
+
                     @error('payment_method')<div class="err-text">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -107,7 +108,7 @@
                                 </div>
                                 <div class="mname">
                                     {{ $v->product->name }}
-                                    <small>{{ $v->label }}</small>
+                                    <small>{{ $v->short_label }}</small>
                                 </div>
                                 <div class="mprice">{{ number_format($item->line_total,0,',','.') }}₫</div>
                             </div>
@@ -162,7 +163,7 @@ const fmt = n => n.toLocaleString('vi-VN') + '₫';
 
 function pickPay(method){
     document.getElementById('opt-cod').classList.toggle('active', method === 'cod');
-    document.getElementById('opt-bank').classList.toggle('active', method === 'bank');
+    document.getElementById('opt-vnpay').classList.toggle('active', method === 'vnpay');
 }
 
 function setTotals(discount){

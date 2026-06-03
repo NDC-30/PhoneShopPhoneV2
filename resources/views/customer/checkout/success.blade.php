@@ -25,7 +25,7 @@
                 </div>
                 <div class="mname">
                     {{ $v?->product?->name ?? 'Sản phẩm' }}
-                    <small>{{ $v?->label }}</small>
+                    <small>{{ $v?->short_label }}</small>
                 </div>
                 <div class="mprice">{{ number_format($d->subtotal,0,',','.') }}₫</div>
             </div>
@@ -46,7 +46,7 @@
         <div style="font-size:14.5px;line-height:1.9;color:var(--ink-soft)">
             <div><strong style="color:var(--ink)">{{ $order->receiver_name }}</strong> · {{ $order->receiver_phone }}</div>
             <div>{{ $order->shipping_address }}, {{ $order->ward }}, {{ $order->district }}, {{ $order->province }}</div>
-            <div>Thanh toán: {{ $order->payment_method === 'cod' ? 'Khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng' }}</div>
+            <div>Thanh toán: {{ $order->payment_method === 'cod' ? 'Khi nhận hàng (COD)' : 'VNPay' }}</div>
             @if($order->customer_note)<div>Ghi chú: {{ $order->customer_note }}</div>@endif
         </div>
     </div>

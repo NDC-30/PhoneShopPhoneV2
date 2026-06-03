@@ -49,8 +49,8 @@ class OrderController extends Controller
             'district' => $request->district ?? 'N/A',
             'ward' => $request->ward ?? 'N/A',
             'shipping_address' => $request->shipping_address ?? 'Mua tại quầy',
-            'payment_method' => $request->payment_method ?? 'CASH',
-            'status' => 'completed', 
+            'payment_method' => $request->payment_method ?? 'cash',
+            'status' => 'completed',
         ]);
 
         OrderDetail::create([
@@ -62,6 +62,7 @@ class OrderController extends Controller
         ]);
 
         $variant->decrement('stock', $request->quantity);
+        $variant->increment('sold', $request->quantity);
 
         return redirect()->route('admin.orders.index')->with('success', 'Đã tạo đơn hàng mới thành công!');
     }
@@ -73,9 +74,10 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order'));
     }
 
-    // 5. CẬP NHẬT TRẠNG THÁI & SHIPPER & HOÀN KHO KHI HỦY
+    // 5. CẬP NHẬT TRẠNG THÁI & SHIPPER & HOÀN KHO
     public function update(Request $request, string $id)
     {
+        // Bắt buộc có ĐVVC + mã vận đơn khi giao/hoàn thành
         if (in_array($request->status, ['shipping', 'completed'])) {
             $request->validate([
                 'carrier' => 'required',
@@ -90,34 +92,40 @@ class OrderController extends Controller
         $oldStatus = $order->status;
         $newStatus = $request->status;
 
-        // Logic Hoàn Kho khi Hủy Đơn
-        if ($newStatus == 'cancelled' && $oldStatus != 'cancelled') {
+        // Các trạng thái "đã trả hàng về kho"
+        $returnedStates = ['cancelled', 'returned'];
+
+        // Hoàn kho khi chuyển SANG hủy / hoàn trả
+        if (in_array($newStatus, $returnedStates) && !in_array($oldStatus, $returnedStates)) {
             foreach ($order->details as $detail) {
-                $variant = Variant::find($detail->variant_id);
-                if ($variant) {
-                    $variant->increment('stock', $detail->quantity); 
+                if ($variant = Variant::find($detail->variant_id)) {
+                    $variant->increment('stock', $detail->quantity);
+                    if ($variant->sold >= $detail->quantity) {
+                        $variant->decrement('sold', $detail->quantity);
+                    }
                 }
             }
         }
 
-        // Logic Trừ Kho khi Khôi phục đơn từ Hủy
-        if ($oldStatus == 'cancelled' && $newStatus != 'cancelled') {
+        // Trừ kho lại khi KHÔI PHỤC từ hủy/hoàn trả về trạng thái bán
+        if (in_array($oldStatus, $returnedStates) && !in_array($newStatus, $returnedStates)) {
             foreach ($order->details as $detail) {
                 $variant = Variant::find($detail->variant_id);
                 if ($variant && $variant->stock >= $detail->quantity) {
                     $variant->decrement('stock', $detail->quantity);
+                    $variant->increment('sold', $detail->quantity);
                 } else {
                     return redirect()->back()->with('error', 'Không đủ hàng trong kho để khôi phục đơn này!');
                 }
             }
         }
-        
+
         $order->update(['status' => $newStatus]);
 
         // Lưu bảng Shipping
         if ($request->has('carrier') || $request->has('tracking_number')) {
             Shipping::updateOrCreate(
-                ['order_id' => $order->order_id], 
+                ['order_id' => $order->order_id],
                 [
                     'carrier' => $request->carrier,
                     'tracking_number' => $request->tracking_number,
@@ -137,7 +145,7 @@ class OrderController extends Controller
 
         OrderDetail::where('order_id', $order->order_id)->delete();
         Shipping::where('order_id', $order->order_id)->delete();
-        
+
         $order->delete();
 
         return redirect()->route('admin.orders.index')->with('success', 'Đã xóa vĩnh viễn đơn hàng và các dữ liệu liên quan!');

@@ -318,8 +318,10 @@ header.site{
 .status{font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em}
 .status.pending{background:#fff4e5;color:#b66b00}
 .status.confirmed{background:#e7f0ff;color:#1257c5}
+.status.processing{background:#e7f0ff;color:#1257c5}
 .status.shipping{background:#eef;color:#4338ca}
 .status.completed{background:#e7f6ec;color:var(--ok)}
+.status.returned{background:#f3ecff;color:#7c3aed}
 .status.cancelled{background:#fdecea;color:var(--accent)}
 
 /* ---------- AUTH ---------- */

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Variant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AccountController extends Controller
@@ -62,8 +64,46 @@ class AccountController extends Controller
     public function orderShow(Order $order)
     {
         abort_if($order->user_id !== auth()->id(), 403);
-        $order->load('details.variant.product', 'shipping', 'payment', 'voucher');
+        $order->load('details.variant.product', 'details.variant.attributeValues.attribute', 'shipping', 'payment', 'voucher');
 
         return view('customer.account.order-show', compact('order'));
+    }
+
+    // Khách hủy đơn — CHỈ khi đơn còn "Chờ xác nhận" (pending)
+    public function cancelOrder(Order $order)
+    {
+        abort_if($order->user_id !== auth()->id(), 403);
+
+        if ($order->status !== 'pending') {
+            return back()->with('error', 'Đơn đã được xác nhận nên không thể hủy. Vui lòng liên hệ shop để được hỗ trợ.');
+        }
+
+        DB::transaction(function () use ($order) {
+            // Hoàn lại kho cho từng sản phẩm
+            foreach ($order->details as $d) {
+                if ($variant = Variant::find($d->variant_id)) {
+                    $variant->increment('stock', $d->quantity);
+                    if ($variant->sold >= $d->quantity) {
+                        $variant->decrement('sold', $d->quantity);
+                    }
+                }
+            }
+
+            // Trả lại lượt dùng voucher (nếu có)
+            if ($order->voucher_id && $order->voucher && $order->voucher->used_count > 0) {
+                $order->voucher->decrement('used_count');
+            }
+
+            $order->update([
+                'status'         => 'cancelled',
+                'payment_status' => 'cancelled',
+            ]);
+
+            if ($order->payment) {
+                $order->payment->update(['status' => 'cancelled']);
+            }
+        });
+
+        return back()->with('success', 'Đã hủy đơn hàng ' . $order->order_number . '.');
     }
 }

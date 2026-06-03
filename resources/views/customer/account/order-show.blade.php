@@ -3,14 +3,15 @@
 
 @php
     $statusLabels = [
-        'pending'   => 'Chờ xử lý',
-        'confirmed' => 'Đã xác nhận',
-        'shipping'  => 'Đang giao',
-        'completed' => 'Hoàn thành',
-        'cancelled' => 'Đã hủy',
+        'pending'    => 'Chờ xác nhận',
+        'processing' => 'Đã xác nhận',
+        'shipping'   => 'Đang giao hàng',
+        'completed'  => 'Hoàn thành',
+        'returned'   => 'Hoàn trả',
+        'cancelled'  => 'Đã hủy',
     ];
     $st  = $order->status ?? 'pending';
-    $cls = in_array($st, ['pending','confirmed','shipping','completed','cancelled']) ? $st : 'pending';
+    $cls = in_array($st, ['pending','processing','shipping','completed','returned','cancelled']) ? $st : 'pending';
 @endphp
 
 @section('content')
@@ -44,7 +45,7 @@
                             </div>
                             <div class="mname">
                                 {{ $v?->product?->name ?? 'Sản phẩm' }}
-                                <small>{{ $v?->label }}</small>
+                                <small>{{ $v?->short_label }}</small>
                             </div>
                             <div class="mprice">{{ number_format($d->subtotal,0,',','.') }}₫</div>
                         </div>
@@ -66,11 +67,24 @@
                 <div style="font-size:14.5px;line-height:1.9;color:var(--ink-soft);margin-top:10px">
                     <div><strong style="color:var(--ink)">{{ $order->receiver_name }}</strong> · {{ $order->receiver_phone }}</div>
                     <div>{{ $order->shipping_address }}, {{ $order->ward }}, {{ $order->district }}, {{ $order->province }}</div>
-                    <div>Thanh toán: {{ $order->payment_method === 'cod' ? 'Khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng' }}
+                    <div>Thanh toán: {{ $order->payment_method === 'cod' ? 'Khi nhận hàng (COD)' : 'VNPay' }}
                         — {{ $order->payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán' }}</div>
                     @if($order->customer_note)<div>Ghi chú: {{ $order->customer_note }}</div>@endif
                 </div>
             </div>
+
+            {{-- HỦY ĐƠN: chỉ khi còn "Chờ xác nhận" --}}
+            @if($order->status === 'pending')
+                <form method="POST" action="{{ route('account.order.cancel', $order->order_id) }}"
+                      onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?')" style="margin-top:18px">
+                    @csrf
+                    <button type="submit" class="btn btn-line" style="color:var(--accent);border-color:var(--accent)">Hủy đơn hàng</button>
+                </form>
+            @elseif($order->status === 'cancelled')
+                <p style="margin-top:18px;color:var(--accent);font-size:14px">Đơn hàng đã được hủy.</p>
+            @else
+                <p style="margin-top:18px;color:var(--muted);font-size:14px">Đơn đã được xác nhận nên không thể tự hủy. Cần hỗ trợ, vui lòng liên hệ shop.</p>
+            @endif
         </div>
     </div>
 </div>

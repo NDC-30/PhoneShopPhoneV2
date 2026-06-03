@@ -124,7 +124,7 @@ class CheckoutController extends Controller
             'ward'             => 'required|string|max:50',
             'shipping_address' => 'required|string|max:255',
             'customer_note'    => 'nullable|string',
-            'payment_method'   => 'required|in:cod,bank',
+            'payment_method'   => 'required|in:cod,vnpay',
         ]);
 
         $items = $this->cart->items();
@@ -219,7 +219,12 @@ class CheckoutController extends Controller
             return back()->with('error', $e->getMessage() ?: 'Đặt hàng thất bại, vui lòng thử lại.');
         }
 
-        // Dọn giỏ + voucher
+        // Thanh toán VNPay: chuyển sang cổng, CHƯA dọn giỏ (đợi thanh toán xong)
+        if ($data['payment_method'] === 'vnpay') {
+            return redirect()->route('vnpay.create', $order->order_id);
+        }
+
+        // COD: dọn giỏ + voucher rồi về trang hoàn tất
         $this->cart->clear();
 
         return redirect()->route('checkout.success', $order->order_id);
@@ -229,7 +234,7 @@ class CheckoutController extends Controller
     {
         // Chỉ chủ đơn mới xem được
         abort_if($order->user_id !== auth()->id(), 403);
-        $order->load('details.variant.product', 'shipping', 'payment');
+        $order->load('details.variant.product', 'details.variant.attributeValues.attribute', 'shipping', 'payment');
 
         return view('customer.checkout.success', compact('order'));
     }

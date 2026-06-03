@@ -12,6 +12,7 @@ use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\CheckoutController;
 use App\Http\Controllers\Customer\AccountController;
 use App\Http\Controllers\Customer\AuthController as CustomerAuthController;
+use App\Http\Controllers\Customer\VnpayController;
 
 // =========================
 // ADMIN CONTROLLERS
@@ -29,7 +30,7 @@ use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\CustomerController;
 
 // =========================
-// AUTH ADMIN (giữ nguyên của bạn)
+// AUTH ADMIN 
 // =========================
 use App\Http\Controllers\AuthController;
 
@@ -52,6 +53,10 @@ Route::get('/san-pham/{slug}', [CustomerProductController::class, 'show'])->name
 
 // Xem trước voucher (công khai - trang chi tiết sản phẩm)
 Route::post('/voucher/xem-truoc', [CheckoutController::class, 'preview'])->name('voucher.preview');
+
+// VNPay trả kết quả (công khai — VNPay redirect/gọi vào đây)
+Route::get('/thanh-toan/vnpay/ket-qua', [VnpayController::class, 'return'])->name('vnpay.return');
+Route::get('/thanh-toan/vnpay/ipn', [VnpayController::class, 'ipn'])->name('vnpay.ipn');
 
 // Giỏ hàng (cho cả khách chưa đăng nhập)
 Route::prefix('gio-hang')->name('cart.')->group(function () {
@@ -82,19 +87,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/hoan-tat/{order}', [CheckoutController::class, 'success'])->name('success');
     });
 
+    // Tạo phiên thanh toán VNPay cho 1 đơn (cần đăng nhập + đúng chủ đơn)
+    Route::get('/thanh-toan/vnpay/tao/{order}', [VnpayController::class, 'create'])->name('vnpay.create');
+
     Route::prefix('tai-khoan')->name('account.')->group(function () {
         Route::get('/', [AccountController::class, 'index'])->name('index');
         Route::put('/', [AccountController::class, 'update'])->name('update');
         Route::put('/mat-khau', [AccountController::class, 'password'])->name('password');
         Route::get('/don-hang', [AccountController::class, 'orders'])->name('orders');
         Route::get('/don-hang/{order}', [AccountController::class, 'orderShow'])->name('order.show');
+        Route::post('/don-hang/{order}/huy', [AccountController::class, 'cancelOrder'])->name('order.cancel');
     });
 });
 
 
 // ======================================================
-// ADMIN ROUTES (giữ nguyên của bạn)
-// ======================================================
+// ADMIN ROUTES (giữ nguyên của bạn)========================================
 Route::prefix('admin')
     ->middleware('auth')
     ->name('admin.')

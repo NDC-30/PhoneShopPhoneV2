@@ -3,11 +3,12 @@
 
 @php
     $statusLabels = [
-        'pending'   => 'Chờ xử lý',
-        'confirmed' => 'Đã xác nhận',
-        'shipping'  => 'Đang giao',
-        'completed' => 'Hoàn thành',
-        'cancelled' => 'Đã hủy',
+        'pending'    => 'Chờ xác nhận',
+        'processing' => 'Đã xác nhận',
+        'shipping'   => 'Đang giao hàng',
+        'completed'  => 'Hoàn thành',
+        'returned'   => 'Hoàn trả',
+        'cancelled'  => 'Đã hủy',
     ];
 @endphp
 
@@ -26,7 +27,7 @@
                 @forelse($orders as $order)
                     @php
                         $st = $order->status ?? 'pending';
-                        $cls = in_array($st, ['pending','confirmed','shipping','completed','cancelled']) ? $st : 'pending';
+                        $cls = in_array($st, ['pending','processing','shipping','completed','returned','cancelled']) ? $st : 'pending';
                     @endphp
                     <div class="order-row">
                         <div class="top">
@@ -37,7 +38,7 @@
                             <span class="status {{ $cls }}">{{ $statusLabels[$cls] ?? $st }}</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;align-items:center">
-                            <span style="color:var(--muted);font-size:13.5px">{{ $order->details_count ?? $order->details->count() }} sản phẩm · {{ $order->payment_method === 'cod' ? 'COD' : 'Chuyển khoản' }}</span>
+                            <span style="color:var(--muted);font-size:13.5px">{{ $order->details_count ?? $order->details->count() }} sản phẩm · {{ $order->payment_method === 'cod' ? 'COD' : 'VNPay' }}</span>
                             <span style="font-weight:700">{{ number_format($order->grand_total,0,',','.') }}₫</span>
                         </div>
                         <div style="margin-top:12px;text-align:right">

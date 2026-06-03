@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="hero-media">
-            @php $heroImg = $featured->first()->thumbnail ?? asset('images/placeholder.png'); @endphp
+            @php $heroImg = $featured->first()->thumbnail ?? asset('https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:100/plain/https://media-asset.cellphones.com.vn/dashboard-v1/iphone-17-pro-max_home_05_2026.png'); @endphp
             <img src="{{ $heroImg }}" alt="Điện thoại nổi bật">
         </div>
     </section>

@@ -26,9 +26,9 @@
                 </a>
                 <div class="meta">
                     <h4>{{ $v->product->name }}</h4>
-                    <div class="attrs">{{ $v->label }}</div>
+                    <div class="attrs">{{ $v->short_label }}</div>
                     <div class="unit">{{ number_format($v->price,0,',','.') }}₫</div>
-                    <form method="POST" action="{{ route('cart.remove') }}">
+                    <form method="POST" action="{{ route('cart.remove') }}" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')">
                         @csrf
                         <input type="hidden" name="variant_id" value="{{ $v->variant_id }}">
                         <button class="remove" type="submit">Xóa</button>
@@ -36,16 +36,18 @@
                 </div>
                 <div class="right">
                     <div class="qty">
-                        <button type="button" onclick="updateQty({{ $v->variant_id }}, {{ $item->quantity - 1 }})">−</button>
-                        <input type="text" value="{{ $item->quantity }}" readonly>
-                        <button type="button" onclick="updateQty({{ $v->variant_id }}, {{ $item->quantity + 1 }})">+</button>
+                        <button type="button" onclick="stepQty({{ $v->variant_id }}, -1)">−</button>
+                        <input type="number" min="1" inputmode="numeric"
+                               id="qty-{{ $v->variant_id }}" value="{{ $item->quantity }}"
+                               onchange="updateQty({{ $v->variant_id }}, this.value)">
+                        <button type="button" onclick="stepQty({{ $v->variant_id }}, 1)">+</button>
                     </div>
                     <div class="line-total">{{ number_format($item->line_total,0,',','.') }}₫</div>
                 </div>
             </div>
             @endforeach
 
-            <form method="POST" action="{{ route('cart.clear') }}" style="margin-top:18px">
+            <form method="POST" action="{{ route('cart.clear') }}" style="margin-top:18px" onsubmit="return confirm('Xóa toàn bộ sản phẩm trong giỏ hàng?')">
                 @csrf
                 <button class="remove" type="submit" style="color:var(--muted)">Xóa toàn bộ giỏ hàng</button>
             </form>
@@ -81,7 +83,15 @@
 
 @push('scripts')
 <script>
+function stepQty(variantId, delta){
+    const el = document.getElementById('qty-' + variantId);
+    let n = parseInt(el.value || '1') + delta;
+    if(n < 1) n = 1;                 // giảm tới 1 thì dừng, không tự xóa
+    updateQty(variantId, n);
+}
 async function updateQty(variantId, qty){
+    qty = parseInt(qty);
+    if(isNaN(qty) || qty < 1) qty = 1;
     const r = await fetch("{{ route('cart.update') }}", {
         method:'POST',
         headers:{'Content-Type':'application/json','X-CSRF-TOKEN':window.APP.csrf,'X-Requested-With':'XMLHttpRequest'},
