@@ -3,34 +3,31 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\Brand;
-use App\Models\Category;
+use App\Models\Product;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        $featuredProducts = Product::with([
-            'brand',
-            'variants'
-        ])
-        ->where('status', 1)
-        ->latest()
-        ->take(12)
-        ->get();
+        $with = ['brand', 'images', 'variants'];
+
+        $featured = Product::active()->with($with)
+            ->where('is_featured', 1)
+            ->latest('product_id')->take(8)->get();
+
+        $newest = Product::active()->with($with)
+            ->latest('product_id')->take(8)->get();
+
+        if ($featured->isEmpty()) $featured = $newest;
 
         $brands = Brand::where('status', 1)->get();
 
-        $categories = Category::where('status', 1)->get();
+        return view('customer.home.index', compact('featured', 'newest', 'brands'));
+    }
 
-        return view(
-            'customer.home.index',
-            compact(
-                'featuredProducts',
-                'brands',
-                'categories'
-            )
-        );
+    public function contact()
+    {
+        return view('customer.home.contact');
     }
 }

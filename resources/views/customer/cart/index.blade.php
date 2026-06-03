@@ -1,21 +1,93 @@
-@extends('customer.layouts.master')
-
-@section('title', 'Giỏ hàng')
+@extends('customer.layouts.app')
+@section('title', 'Giỏ hàng — PhoneShop')
 
 @section('content')
-<div class="container py-5">
+<div class="container">
+    <div class="crumb"><a href="{{ route('home') }}">Trang chủ</a> <span>/</span> <span>Giỏ hàng</span></div>
 
-    <h2 class="mb-4">Giỏ hàng</h2>
-
-    @if(count($cart))
-        <div class="alert alert-success">
-            Có {{ count($cart) }} sản phẩm trong giỏ hàng
+    @if($items->isEmpty())
+        <div class="empty">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.4 12.5a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L21 6H6"/></svg>
+            <h3>Giỏ hàng trống</h3>
+            <p style="margin-bottom:22px">Hãy chọn cho mình một chiếc điện thoại ưng ý nhé.</p>
+            <a href="{{ route('shop.index') }}" class="btn btn-dark">Khám phá sản phẩm</a>
         </div>
     @else
-        <div class="alert alert-info">
-            Giỏ hàng đang trống
-        </div>
-    @endif
+    <h1 style="font-size:32px;letter-spacing:-.03em;margin:24px 0 4px">Giỏ hàng</h1>
+    <p style="color:var(--muted);margin-bottom:8px">{{ $items->sum('quantity') }} sản phẩm trong giỏ</p>
 
+    <div class="cart-wrap">
+        <div class="cart-list">
+            @foreach($items as $item)
+            @php $v = $item->variant; @endphp
+            <div class="cart-item">
+                <a href="{{ route('product.show', $v->product->slug ?? $v->product->product_id) }}" class="thumb">
+                    <img src="{{ $v->image_url }}" alt="">
+                </a>
+                <div class="meta">
+                    <h4>{{ $v->product->name }}</h4>
+                    <div class="attrs">{{ $v->label }}</div>
+                    <div class="unit">{{ number_format($v->price,0,',','.') }}₫</div>
+                    <form method="POST" action="{{ route('cart.remove') }}">
+                        @csrf
+                        <input type="hidden" name="variant_id" value="{{ $v->variant_id }}">
+                        <button class="remove" type="submit">Xóa</button>
+                    </form>
+                </div>
+                <div class="right">
+                    <div class="qty">
+                        <button type="button" onclick="updateQty({{ $v->variant_id }}, {{ $item->quantity - 1 }})">−</button>
+                        <input type="text" value="{{ $item->quantity }}" readonly>
+                        <button type="button" onclick="updateQty({{ $v->variant_id }}, {{ $item->quantity + 1 }})">+</button>
+                    </div>
+                    <div class="line-total">{{ number_format($item->line_total,0,',','.') }}₫</div>
+                </div>
+            </div>
+            @endforeach
+
+            <form method="POST" action="{{ route('cart.clear') }}" style="margin-top:18px">
+                @csrf
+                <button class="remove" type="submit" style="color:var(--muted)">Xóa toàn bộ giỏ hàng</button>
+            </form>
+        </div>
+
+        {{-- TÓM TẮT --}}
+        <aside class="summary">
+            <h3>Tóm tắt đơn hàng</h3>
+            <div class="line"><span>Tạm tính</span><span>{{ number_format($subtotal,0,',','.') }}₫</span></div>
+            @if($voucher)
+                <div class="line"><span>Voucher ({{ $voucher['code'] }})</span><span class="accent">−{{ number_format($voucher['discount'],0,',','.') }}₫</span></div>
+            @endif
+            <div class="line"><span>Phí vận chuyển</span><span>{{ $subtotal >= 5000000 ? 'Miễn phí' : number_format(30000,0,',','.').'₫' }}</span></div>
+            @php
+                $disc = $voucher['discount'] ?? 0;
+                $ship = $subtotal >= 5000000 ? 0 : 30000;
+                $total = max(0,$subtotal - $disc) + $ship;
+            @endphp
+            <div class="line total"><span>Tổng cộng</span><span>{{ number_format($total,0,',','.') }}₫</span></div>
+
+            @auth
+                <a href="{{ route('checkout.index') }}" class="btn btn-dark btn-block" style="margin-top:18px">Tiến hành thanh toán</a>
+            @else
+                <a href="{{ route('customer.login') }}" class="btn btn-dark btn-block" style="margin-top:18px">Đăng nhập để thanh toán</a>
+                <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:12px">Bạn cần đăng nhập để đặt hàng</p>
+            @endauth
+            <a href="{{ route('shop.index') }}" class="btn btn-line btn-block" style="margin-top:10px">Tiếp tục mua sắm</a>
+        </aside>
+    </div>
+    @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+async function updateQty(variantId, qty){
+    const r = await fetch("{{ route('cart.update') }}", {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':window.APP.csrf,'X-Requested-With':'XMLHttpRequest'},
+        body: JSON.stringify({ variant_id: variantId, quantity: qty })
+    });
+    if(r.ok){ location.reload(); }
+}
+</script>
+@endpush
