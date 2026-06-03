@@ -34,4 +34,7 @@ class Order extends Model
     {
         return $this->hasOne(Payment::class, 'order_id', 'order_id');
     }
+    protected $casts = [
+    'created_at' => 'datetime',
+];
 }

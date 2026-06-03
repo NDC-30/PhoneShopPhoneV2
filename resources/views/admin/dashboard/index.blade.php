@@ -3,202 +3,358 @@
 @section('page_title', 'Dashboard')
 
 @section('content')
-<div class="container-fluid p-0">
-    
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100 p-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small text-uppercase fw-bold">Doanh Thu</span>
-                        <h4 class="fw-bold my-2 text-primary">{{ number_format($totalRevenue) }}đ</h4>
-                        @if($totalRevenue > 0)
-                            <span class="text-success small fw-bold"><i class="bi bi-graph-up"></i> Đang sinh lời</span>
-                        @else
-                            <span class="text-muted small fst-italic">Chưa phát sinh giao dịch</span>
-                        @endif
-                    </div>
-                    <div class="bg-light-primary text-primary rounded p-3 fs-3 d-flex align-items-center justify-content-center" style="width:60px; height:60px; background-color:#eef2ff;">
-                        <i class="bi bi-currency-dollar"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100 p-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small text-uppercase fw-bold">Đơn Cần Xử Lý</span>
-                        <h4 class="fw-bold my-2">{{ $totalOrders }}</h4>
-                        @if($totalOrders > 0)
-                            <span class="text-info small fw-bold"><i class="bi bi-box-seam"></i> Đang chờ đóng gói</span>
-                        @else
-                            <span class="text-muted small fst-italic">Không có đơn tồn đọng</span>
-                        @endif
-                    </div>
-                    <div class="text-info rounded p-3 fs-3 d-flex align-items-center justify-content-center" style="width:60px; height:60px; background-color:#e0f2fe;">
-                        <i class="bi bi-bag-check"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100 p-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small text-uppercase fw-bold">Sản Phẩm</span>
-                        <h4 class="fw-bold my-2 text-warning">{{ $totalProducts }}</h4>
-                        @if($totalProducts > 0)
-                            <span class="text-warning small fw-bold"><i class="bi bi-check2-circle"></i> Sẵn sàng kinh doanh</span>
-                        @else
-                            <span class="text-danger small fst-italic">Kho đang trống!</span>
-                        @endif
-                    </div>
-                    <div class="text-warning rounded p-3 fs-3 d-flex align-items-center justify-content-center" style="width:60px; height:60px; background-color:#fef3c7;">
-                        <i class="bi bi-phone"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100 p-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small text-uppercase fw-bold">Khách Hàng</span>
-                        <h4 class="fw-bold my-2 text-success">{{ $totalCustomers }}</h4>
-                        @if($totalCustomers > 0)
-                            <span class="text-success small fw-bold"><i class="bi bi-person-lines-fill"></i> Đã có thành viên</span>
-                        @else
-                            <span class="text-muted small fst-italic">Chưa có ai đăng ký</span>
-                        @endif
-                    </div>
-                    <div class="text-success rounded p-3 fs-3 d-flex align-items-center justify-content-center" style="width:60px; height:60px; background-color:#dcfce7;">
-                        <i class="bi bi-people"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="container-fluid p-0">
 
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h6 class="fw-bold text-secondary mb-3">Doanh Thu Theo Tháng</h6>
-                <div style="height: 300px; position: relative;">
-                    @if($totalRevenue > 0)
-                        <canvas id="revenueChart"></canvas>
-                    @else
-                        <div class="d-flex align-items-center justify-content-center h-100 text-muted fst-italic border rounded bg-light">
-                            Hệ thống chưa có đủ dữ liệu doanh thu để vẽ biểu đồ!
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h6 class="fw-bold text-secondary mb-3">Sản Phẩm Có Nhiều Phiên Bản</h6>
-                <div class="list-group list-group-flush">
-                    @forelse($topProducts as $index => $prod)
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:24px; height:24px;">{{ $index + 1 }}</span>
-                            <div>
-                                <h6 class="mb-0 small fw-bold text-dark">{{ $prod->name }}</h6>
-                                <small class="text-muted">{{ $prod->variants_count }} phiên bản cấu hình</small>
-                            </div>
-                        </div>
-                    </div>
-                    @empty
-                    <div class="text-center text-muted py-4">Chưa có sản phẩm nào!</div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="card shadow-sm border-0 p-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="fw-bold text-secondary mb-0">Đơn Hàng Gần Đây</h6>
-            <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-primary">Xem tất cả</a>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Mã Đơn</th>
-                        <th>Khách Hàng</th>
-                        <th>Ngày Đặt</th>
-                        <th>Tổng Tiền</th>
-                        <th>Trạng Thái</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($recentOrders as $order)
-                    <tr>
-                        <td><strong>{{ $order->order_number ?? '#'.$order->order_id }}</strong></td>
-                        <td>{{ $order->receiver_name ?? 'Khách vãng lai' }}</td>
-                        <td>{{ date('d/m/Y', strtotime($order->created_at)) }}</td>
-                        <td class="text-danger fw-bold">{{ number_format($order->grand_total) }}đ</td>
-                        <td>
-                            @if($order->status == 'completed')
-                                <span class="badge bg-success">Thành công</span>
-                            @elseif($order->status == 'pending')
-                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                            @elseif($order->status == 'cancelled')
-                                <span class="badge bg-danger">Đã hủy</span>
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-3">
+
+                <div class="card shadow-sm border-0 h-100 p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-bold">Doanh Thu</span>
+                            <h4 class="fw-bold my-2 text-primary">{{ number_format($totalRevenue) }}đ</h4>
+                            @if ($totalRevenue > 0)
+                                <span class="text-success small fw-bold"><i class="bi bi-graph-up"></i> Đang sinh lời</span>
                             @else
-                                <span class="badge bg-info text-dark">Đang xử lý</span>
+                                <span class="text-muted small fst-italic">Chưa phát sinh giao dịch</span>
                             @endif
-                        </td>
-                    </tr>
+                        </div>
+                        <div class="bg-light-primary text-primary rounded p-3 fs-3 d-flex align-items-center justify-content-center"
+                            style="width:60px; height:60px; background-color:#eef2ff;">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100 p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-bold">Đơn Cần Xử Lý</span>
+                            <h4 class="fw-bold my-2">{{ $totalOrders }}</h4>
+                            @if ($totalOrders > 0)
+                                <span class="text-info small fw-bold"><i class="bi bi-box-seam"></i> Đang chờ đóng
+                                    gói</span>
+                            @else
+                                <span class="text-muted small fst-italic">Không có đơn tồn đọng</span>
+                            @endif
+                        </div>
+                        <div class="text-info rounded p-3 fs-3 d-flex align-items-center justify-content-center"
+                            style="width:60px; height:60px; background-color:#e0f2fe;">
+                            <i class="bi bi-bag-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100 p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-bold">Sản Phẩm</span>
+                            <h4 class="fw-bold my-2 text-warning">{{ $totalProducts }}</h4>
+                            @if ($totalProducts > 0)
+                                <span class="text-warning small fw-bold"><i class="bi bi-check2-circle"></i> Sẵn sàng kinh
+                                    doanh</span>
+                            @else
+                                <span class="text-danger small fst-italic">Kho đang trống!</span>
+                            @endif
+                        </div>
+                        <div class="text-warning rounded p-3 fs-3 d-flex align-items-center justify-content-center"
+                            style="width:60px; height:60px; background-color:#fef3c7;">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100 p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-bold">Khách Hàng</span>
+                            <h4 class="fw-bold my-2 text-success">{{ $totalCustomers }}</h4>
+                            @if ($totalCustomers > 0)
+                                <span class="text-success small fw-bold"><i class="bi bi-person-lines-fill"></i> Đã có thành
+                                    viên</span>
+                            @else
+                                <span class="text-muted small fst-italic">Chưa có ai đăng ký</span>
+                            @endif
+                        </div>
+                        <div class="text-success rounded p-3 fs-3 d-flex align-items-center justify-content-center"
+                            style="width:60px; height:60px; background-color:#dcfce7;">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{--  --}}
+        <div class="card shadow-sm border-0 p-3 mb-4">
+            <form method="GET" action="{{ route('admin.dashboard') }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label">Kiểu thống kê</label>
+                        <select name="type" class="form-select">
+                            <option value="day" {{ request('type') == 'day' ? 'selected' : '' }}>
+                                Theo ngày
+                            </option>
+
+                            <option value="month" {{ request('type', 'month') == 'month' ? 'selected' : '' }}>
+                                Theo tháng
+                            </option>
+
+                            <option value="year" {{ request('type') == 'year' ? 'selected' : '' }}>
+                                Theo năm
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Từ ngày</label>
+                        <input type="date" name="from" class="form-control" value="{{ request('from') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Đến ngày</label>
+                        <input type="date" name="to" class="form-control" value="{{ request('to') }}">
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100">
+                            <i class="bi bi-funnel"></i> Lọc
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-7">
+                <div class="card shadow-sm border-0 p-3 h-100">
+                    <h6 class="fw-bold text-secondary mb-3">
+                        {{ $chartTitle }}
+                    </h6>
+                    <div style="height: 300px; position: relative;">
+                        @if ($totalRevenue > 0)
+                            <canvas id="revenueChart"></canvas>
+                        @else
+                            <div
+                                class="d-flex align-items-center justify-content-center h-100 text-muted fst-italic border rounded bg-light">
+                                Hệ thống chưa có đủ dữ liệu doanh thu để vẽ biểu đồ!
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card shadow-sm border-0 p-3 h-100">
+                    <h6 class="fw-bold text-secondary mb-3">Sản Phẩm Có Nhiều Phiên Bản</h6>
+                    <div class="list-group list-group-flush">
+                        @forelse($topProducts as $index => $prod)
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                                <div class="d-flex align-items-center">
+                                    <span
+                                        class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center"
+                                        style="width:24px; height:24px;">{{ $index + 1 }}</span>
+                                    <div>
+                                        <h6 class="mb-0 small fw-bold text-dark">{{ $prod->name }}</h6>
+                                        <small class="text-muted">{{ $prod->variants_count }} phiên bản cấu hình</small>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center text-muted py-4">Chưa có sản phẩm nào!</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+            <div class="row g-4 mb-4">
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+
+                <h6 class="fw-bold mb-3">
+                    Top 5 Sản Phẩm Bán Chạy
+                </h6>
+
+                <canvas id="productPieChart"></canvas>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+
+                <h6 class="fw-bold mb-3">
+                    Danh Sách Top 5 Bán Chạy
+                </h6>
+
+                <div class="list-group">
+
+                    @forelse($bestSellingProducts as $index => $product)
+
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <strong>#{{ $index + 1 }}</strong>
+                                {{ $product->name }}
+                            </div>
+
+                            <span class="badge bg-success">
+                                {{ $product->sold }} SP
+                            </span>
+
+                        </div>
+
                     @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Hệ thống chưa phát sinh đơn hàng nào!</td>
-                    </tr>
+
+                        <div class="text-muted">
+                            Chưa có dữ liệu bán hàng
+                        </div>
+
                     @endforelse
-                </tbody>
-            </table>
+
+                </div>
+
+            </div>
         </div>
     </div>
 
 </div>
+
+        </div>
+
+        <div class="card shadow-sm border-0 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-secondary mb-0">Đơn Hàng Gần Đây</h6>
+                <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-primary">Xem tất cả</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Khách Hàng</th>
+                            <th>Ngày Đặt</th>
+                            <th>Tổng Tiền</th>
+                            <th>Trạng Thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($recentOrders as $order)
+                            <tr>
+                                <td><strong>{{ $order->order_number ?? '#' . $order->order_id }}</strong></td>
+                                <td>{{ $order->receiver_name ?? 'Khách vãng lai' }}</td>
+                                <td>{{ date('d/m/Y', strtotime($order->created_at)) }}</td>
+                                <td class="text-danger fw-bold">{{ number_format($order->grand_total) }}đ</td>
+                                <td>
+                                    @if ($order->status == 'completed')
+                                        <span class="badge bg-success">Thành công</span>
+                                    @elseif($order->status == 'pending')
+                                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                    @elseif($order->status == 'cancelled')
+                                        <span class="badge bg-danger">Đã hủy</span>
+                                    @else
+                                        <span class="badge bg-info text-dark">Đang xử lý</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Hệ thống chưa phát sinh đơn hàng
+                                    nào!</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
 @endsection
 
 @section('js')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const chartElement = document.getElementById('revenueChart');
-        if(chartElement) {
-            const ctx = chartElement.getContext('2d');
-            const dbData = @json($chartData ?? []); // Render mảng 12 tháng từ Controller sang JS
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const chartElement = document.getElementById('revenueChart');
+            if (chartElement) {
+                const ctx = chartElement.getContext('2d');
+                const dbData = @json($chartData ?? []); // Render mảng 12 tháng từ Controller sang JS
 
-            new Chart(ctx, {
-                type: 'bar', // Đổi sang biểu đồ cột cho giống bên trang Doanh Thu
-                data: {
-                    labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
-                    datasets: [{
-                        label: 'Doanh thu (VND)',
-                        data: dbData,
-                        backgroundColor: 'rgba(13, 110, 253, 0.8)',
-                        borderColor: '#0d6efd',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
+                new Chart(ctx, {
+                    type: 'bar', // Đổi sang biểu đồ cột cho giống bên trang Doanh Thu
+                    data: {
+                        labels: @json($labels),
+                        datasets: [{
+                            label: 'Doanh thu (VND)',
+                            data: dbData,
+                            backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                            borderColor: '#0d6efd',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return new Intl.NumberFormat('vi-VN').format(context.raw) +
+                                            ' đ';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('vi-VN').format(value);
+                                    }
+                                }
+                            }
+                        }
                     }
+                });
+                const pieCtx = document.getElementById('productPieChart');
+
+if (pieCtx) {
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: @json($pieLabels),
+            datasets: [{
+                data: @json($pieData),
+                backgroundColor: [
+                    '#0d6efd',
+                    '#198754',
+                    '#ffc107',
+                    '#dc3545',
+                    '#6f42c1'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
                 }
-            });
+            }
         }
     });
-</script>
+}
+            }
+        });
+    </script>
 @endsection

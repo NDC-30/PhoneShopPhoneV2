@@ -12,7 +12,32 @@ class Variant extends Model
     const UPDATED_AT = null;
 
     protected $fillable = ['product_id', 'sku', 'price', 'compare_price', 'cost', 'stock', 'sold', 'image', 'weight', 'status'];
+public function getColorAttribute()
+{
+    return optional(
+        $this->attributeValues
+            ->where('attribute_id', 1)
+            ->first()
+    )->value;
+}
 
+public function getRomAttribute()
+{
+    return optional(
+        $this->attributeValues
+            ->where('attribute_id', 5)
+            ->first()
+    )->value;
+}
+
+public function getRamAttribute()
+{
+    return optional(
+        $this->attributeValues
+            ->where('attribute_id', 34)
+            ->first()
+    )->value;
+}
     public function product() {
         return $this->belongsTo(Product::class, 'product_id', 'product_id');
     }

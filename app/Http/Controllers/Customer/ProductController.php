@@ -11,16 +11,20 @@ class ProductController extends Controller
 {
     public function show($slug)
     {
-        // Tìm theo slug, nếu không có thì theo id
         $product = Product::active()
-            ->with([
-                'brand', 'category', 'images',
-                'variants.attributeValues.attribute',
-                'variants.images',
-            ])
-            ->where('slug', $slug)
-            ->orWhere('product_id', $slug)
-            ->firstOrFail();
+    ->whereHas('variants') // bắt buộc có ít nhất 1 phiên bản
+    ->with([
+        'brand',
+        'category',
+        'images',
+        'variants.attributeValues.attribute',
+        'variants.images',
+    ])
+    ->where(function ($q) use ($slug) {
+        $q->where('slug', $slug)
+          ->orWhere('product_id', $slug);
+    })
+    ->firstOrFail();
 
         // Gom giá trị theo từng thuộc tính (kèm tên + thứ tự để sắp xếp)
         $groups = [];
@@ -83,11 +87,15 @@ class ProductController extends Controller
         if ($gallery->isEmpty()) $gallery->push($product->thumbnail);
 
         // Sản phẩm tương tự cùng hãng
-        $similar = Product::active()
-            ->with(['brand', 'images', 'variants'])
-            ->where('brand_id', $product->brand_id)
-            ->where('product_id', '!=', $product->product_id)
-            ->latest('product_id')->take(4)->get();
+            $similar = Product::active()
+    ->whereHas('variants')
+    ->with(['brand', 'images', 'variants'])
+    ->where('brand_id', $product->brand_id)
+    ->where('product_id', '!=', $product->product_id)
+    ->latest('product_id')
+    ->take(4)
+    ->get();
+    
 
         // Voucher đang khả dụng để gợi ý
         $now = Carbon::now();

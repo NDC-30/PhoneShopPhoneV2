@@ -92,44 +92,44 @@ class ProductController extends Controller
 
     // 5. XÓA SẢN PHẨM (MỚI THÊM)
     public function destroy($id)
-{
-    $product = Product::with('variants')->findOrFail($id);
-
-    // Kiểm tra sản phẩm đã có trong đơn hàng chưa
-    $hasOrders = \App\Models\OrderDetail::whereIn(
-        'variant_id',
-        $product->variants->pluck('variant_id')
-    )->exists();
-
-    if ($hasOrders) {
-        return back()->with(
-            'error',
-            'Sản phẩm đã phát sinh đơn hàng nên không thể xóa!'
-        );
-    }
-
-    // Xóa các phiên bản trước
-    Variant::where(
-        'product_id',
-        $product->product_id
-    )->delete();
-
-    // Xóa sản phẩm
-    $product->delete();
-
-    return back()->with(
-        'success',
-        'Xóa sản phẩm thành công!'
-    );
-}
-    public function publish($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('variants')->findOrFail($id);
 
-        if ($product->variants()->count() < 1) {
+        // Kiểm tra sản phẩm đã có trong đơn hàng chưa
+        $hasOrders = \App\Models\OrderDetail::whereIn(
+            'variant_id',
+            $product->variants->pluck('variant_id')
+        )->exists();
+
+        if ($hasOrders) {
             return back()->with(
                 'error',
-                'Sản phẩm phải có ít nhất 1 phiên bản trước khi đăng bán!'
+                'Sản phẩm đã phát sinh đơn hàng nên không thể xóa!'
+            );
+        }
+
+        // Xóa các phiên bản trước
+        Variant::where(
+            'product_id',
+            $product->product_id
+        )->delete();
+
+        // Xóa sản phẩm
+        $product->delete();
+
+        return back()->with(
+            'success',
+            'Xóa sản phẩm thành công!'
+        );
+    }
+    public function publish($id)
+    {
+        $product = Product::withCount('variants')->findOrFail($id);
+
+        if ($product->variants_count == 0) {
+            return back()->with(
+                'error',
+                'Sản phẩm chưa có phiên bản cấu hình. Vui lòng tạo ít nhất 1 phiên bản trước khi đăng bán.'
             );
         }
 
@@ -137,10 +137,7 @@ class ProductController extends Controller
             'status' => 1
         ]);
 
-        return back()->with(
-            'success',
-            'Đăng bán sản phẩm thành công!'
-        );
+        return back()->with('success', 'Đăng bán thành công');
     }
 
     public function unpublish($id)

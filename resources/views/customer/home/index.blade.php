@@ -15,10 +15,11 @@
                 <a href="{{ route('shop.index', ['sort' => 'newest']) }}" class="btn btn-line">Hàng mới về</a>
             </div>
         </div>
-        <div class="hero-media">
-            @php $heroImg = $featured->first()->thumbnail ?? asset('https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:100/plain/https://media-asset.cellphones.com.vn/dashboard-v1/iphone-17-pro-max_home_05_2026.png'); @endphp
-            <img src="{{ $heroImg }}" alt="Điện thoại nổi bật">
-        </div>
+        @php
+$heroImg = 'https://cdn.images.express.co.uk/img/dynamic/59/940x/secondary/best-iphone-15-pro-deals-uk-4962371.jpg?r=1695486336091';
+@endphp
+
+<img src="{{ $heroImg }}" alt="iPhone 15 Pro">
     </section>
 
     {{-- BRAND CHIPS --}}

@@ -68,7 +68,7 @@
                         Mã giảm giá
                     </div>
                     <div class="voucher-row">
-                        <input type="text" id="voucherCode" placeholder="Nhập mã, vd: NEWUSER5">
+                        <input type="text" id="voucherCode" >
                         <button type="button" class="btn btn-line" style="padding:11px 20px" onclick="checkVoucher()">Áp dụng</button>
                     </div>
                     <div class="voucher-msg" id="voucherMsg"></div>

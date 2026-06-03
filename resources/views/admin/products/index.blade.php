@@ -50,16 +50,24 @@
                                             </button>
                                         </form>
                                     @else
-                                        <form action="{{ route('admin.products.publish', $product->product_id) }}"
-                                            method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-success">
-                                                <i class="bi bi-cart-check"></i> Đăng bán
+                                        @if ($product->variants_count > 0)
+                                            <form action="{{ route('admin.products.publish', $product->product_id) }}"
+                                                method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-cart-check"></i> Đăng bán
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button class="btn btn-sm btn-danger" disabled>
+                                                <i class="bi bi-exclamation-triangle"></i>
+                                                Chưa có cấu hình
                                             </button>
-                                        </form>
+                                        @endif
                                     @endif
-                                    <form action="{{ route('admin.products.destroy', $product->product_id) }}" method="POST"
-                                        class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
+                                    <form action="{{ route('admin.products.destroy', $product->product_id) }}"
+                                        method="POST" class="d-inline"
+                                        onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
                                         @csrf
                                         @method('DELETE')
 
