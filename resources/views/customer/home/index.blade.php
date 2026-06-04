@@ -16,7 +16,7 @@
             </div>
         </div>
         @php
-$heroImg = 'https://cdn.images.express.co.uk/img/dynamic/59/940x/secondary/best-iphone-15-pro-deals-uk-4962371.jpg?r=1695486336091';
+$heroImg = 'https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:100/plain/https://media-asset.cellphones.com.vn/dashboard-v1/manage-banner/s26-ultra-home-0626.png';
 @endphp
 
 <img src="{{ $heroImg }}" alt="iPhone 15 Pro">

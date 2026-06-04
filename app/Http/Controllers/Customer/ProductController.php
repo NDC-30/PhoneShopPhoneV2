@@ -11,20 +11,16 @@ class ProductController extends Controller
 {
     public function show($slug)
     {
+        // Tìm theo slug, nếu không có thì theo id
         $product = Product::active()
-    ->whereHas('variants') // bắt buộc có ít nhất 1 phiên bản
-    ->with([
-        'brand',
-        'category',
-        'images',
-        'variants.attributeValues.attribute',
-        'variants.images',
-    ])
-    ->where(function ($q) use ($slug) {
-        $q->where('slug', $slug)
-          ->orWhere('product_id', $slug);
-    })
-    ->firstOrFail();
+            ->with([
+                'brand', 'category', 'images',
+                'variants.attributeValues.attribute',
+                'variants.images',
+            ])
+            ->where('slug', $slug)
+            ->orWhere('product_id', $slug)
+            ->firstOrFail();
 
         // Gom giá trị theo từng thuộc tính (kèm tên + thứ tự để sắp xếp)
         $groups = [];
@@ -34,9 +30,10 @@ class ProductController extends Controller
                 $aid  = $attr->attribute_id ?? $val->attribute_id;
                 if (!isset($groups[$aid])) {
                     $groups[$aid] = [
-                        'name'   => $attr->display_name ?? $attr->name ?? 'Tùy chọn',
-                        'sort'   => $attr->sort_order ?? 0,
-                        'values' => [],
+                        'name'       => $attr->display_name ?? $attr->name ?? 'Tùy chọn',
+                        'sort'       => $attr->sort_order ?? 0,
+                        'filterable' => (bool) ($attr->filterable ?? false),
+                        'values'     => [],
                     ];
                 }
                 $groups[$aid]['values'][$val->value_id] = [
@@ -49,13 +46,13 @@ class ProductController extends Controller
         // Sắp theo sort_order của thuộc tính
         uasort($groups, fn ($a, $b) => $a['sort'] <=> $b['sort']);
 
-        // Tách: nhóm CÓ NHIỀU giá trị => cho chọn (màu/RAM/ROM...);
-        //        nhóm chỉ MỘT giá trị cố định => đẩy xuống bảng thông số kỹ thuật.
+        // Chỉ thuộc tính được tích "filterable" (Màu / RAM / Dung lượng) MỚI cho chọn.
+        // Các thuộc tính còn lại (Camera, CPU, GPU...) luôn nằm ở bảng thông số.
         $optionGroups = [];   // [ ['name' => ..., 'values' => [...]] ]
         $specs        = [];   // [ ['name' => ..., 'value' => ...] ]
         foreach ($groups as $g) {
             $vals = array_values($g['values']);
-            if (count($vals) > 1) {
+            if ($g['filterable'] && count($vals) > 1) {
                 $optionGroups[] = ['name' => $g['name'], 'values' => $vals];
             } else {
                 $specs[] = ['name' => $g['name'], 'value' => $vals[0]['value']];
@@ -87,15 +84,11 @@ class ProductController extends Controller
         if ($gallery->isEmpty()) $gallery->push($product->thumbnail);
 
         // Sản phẩm tương tự cùng hãng
-            $similar = Product::active()
-    ->whereHas('variants')
-    ->with(['brand', 'images', 'variants'])
-    ->where('brand_id', $product->brand_id)
-    ->where('product_id', '!=', $product->product_id)
-    ->latest('product_id')
-    ->take(4)
-    ->get();
-    
+        $similar = Product::active()
+            ->with(['brand', 'images', 'variants'])
+            ->where('brand_id', $product->brand_id)
+            ->where('product_id', '!=', $product->product_id)
+            ->latest('product_id')->take(4)->get();
 
         // Voucher đang khả dụng để gợi ý
         $now = Carbon::now();

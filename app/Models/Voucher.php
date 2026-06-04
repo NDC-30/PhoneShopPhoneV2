@@ -12,6 +12,7 @@ class Voucher extends Model
     protected $primaryKey = 'voucher_id';
     public $incrementing = true;
     protected $keyType = 'int';
+    public $timestamps = false;          // <-- DÒNG QUAN TRỌNG: bảng vouchers không có created_at/updated_at
 
     protected $fillable = [
         'code',
@@ -29,7 +30,7 @@ class Voucher extends Model
         'discount_type' => 'fixed',
     ];
 
-    // ===== Bổ sung cho phần khách =====
+    // ===== Dùng cho phần khách =====
     public function isUsable(): bool
     {
         if ((int) $this->status !== 1) return false;
