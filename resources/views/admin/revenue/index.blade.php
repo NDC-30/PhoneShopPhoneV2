@@ -1,59 +1,166 @@
 @extends('admin.layouts.master')
 @section('title', 'Báo Cáo Doanh Thu')
-@section('page_title', '📊 Phân Tích & Báo Cáo Doanh Thu')
+@section('page_title', '📊 Báo Cáo Doanh Thu')
+
+@php
+    $pmLabel = fn($pm) => match(strtolower($pm ?? '')) {
+        'cod'   => 'Khi nhận hàng (COD)',
+        'cash'  => 'Tiền mặt (tại quầy)',
+        'vnpay' => 'VNPay',
+        'visa'  => 'Thẻ Visa/Master',
+        default => 'Chuyển khoản',
+    };
+@endphp
 
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="content-area">
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-primary text-white text-center p-3 rounded-3">
-                <div class="small text-uppercase fw-bold opacity-75">Tổng Doanh Thu</div>
-                <h3 class="fw-bold my-2">{{ number_format($totalRevenue) }}đ</h3>
-                <div class="small"><i class="bi bi-wallet2"></i> Toàn hệ thống</div>
+
+    {{-- BỘ LỌC + XUẤT PDF --}}
+    <div class="card border-0 shadow-sm p-3 mb-4">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label small fw-bold mb-1">Năm</label>
+                <select name="year" class="form-select" onchange="this.form.submit()">
+                    @foreach($years as $y)
+                        <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>Năm {{ $y }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label small fw-bold mb-1">Tháng</label>
+                <select name="month" class="form-select" onchange="this.form.submit()">
+                    <option value="0" {{ $month == 0 ? 'selected' : '' }}>Cả năm</option>
+                    @for($m = 1; $m <= 12; $m++)
+                        <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>Tháng {{ $m }}</option>
+                    @endfor
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label small fw-bold mb-1">Ngày</label>
+                <select name="day" class="form-select" onchange="this.form.submit()" {{ $month == 0 ? 'disabled' : '' }}>
+                    <option value="0" {{ $day == 0 ? 'selected' : '' }}>Cả tháng</option>
+                    @for($d = 1; $d <= 31; $d++)
+                        <option value="{{ $d }}" {{ $day == $d ? 'selected' : '' }}>Ngày {{ $d }}</option>
+                    @endfor
+                </select>
+            </div>
+            <div class="col-auto ms-auto">
+                <a href="{{ route('admin.revenue.pdf', request()->query()) }}" target="_blank" class="btn btn-danger">
+                    <i class="bi bi-file-earmark-pdf"></i> Xuất PDF
+                </a>
+            </div>
+        </form>
+        <div class="mt-2 small text-muted">Kỳ báo cáo: <strong class="text-dark">{{ $periodLabel }}</strong></div>
+    </div>
+
+    {{-- KPI --}}
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl">
+            <div class="card border-0 shadow-sm bg-primary text-white p-3 rounded-3 h-100">
+                <div class="small text-uppercase fw-bold opacity-75">Doanh thu trong kỳ</div>
+                <h4 class="fw-bold my-2">{{ number_format($periodRevenue) }}đ</h4>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-success text-white text-center p-3 rounded-3">
-                <div class="small text-uppercase fw-bold opacity-75">Doanh Thu Hôm Nay</div>
-                <h3 class="fw-bold my-2">{{ number_format($todayRevenue) }}đ</h3>
-                <div class="small"><i class="bi bi-graph-up-arrow"></i> Tiền về trong ngày</div>
+        <div class="col-6 col-xl">
+            <div class="card border-0 shadow-sm bg-success text-white p-3 rounded-3 h-100">
+                <div class="small text-uppercase fw-bold opacity-75">Đơn hoàn thành</div>
+                <h4 class="fw-bold my-2">{{ $periodOrders }}</h4>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-info text-white text-center p-3 rounded-3">
-                <div class="small text-uppercase fw-bold opacity-75">Đơn Hàng Thành Công</div>
-                <h3 class="fw-bold my-2">{{ $totalOrders }} đơn</h3>
-                <div class="small"><i class="bi bi-cart-check-fill"></i> Đã giao hoàn tất</div>
+        <div class="col-6 col-xl">
+            <div class="card border-0 shadow-sm bg-dark text-white p-3 rounded-3 h-100">
+                <div class="small text-uppercase fw-bold opacity-75">Giá trị TB / đơn</div>
+                <h4 class="fw-bold my-2">{{ number_format($aov) }}đ</h4>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-danger text-white text-center p-3 rounded-3">
-                <div class="small text-uppercase fw-bold opacity-75">Đơn Hàng Bị Hủy / Bom</div>
-                <h3 class="fw-bold my-2">{{ $cancelledOrders }} đơn</h3>
-                <div class="small"><i class="bi bi-trash3-fill"></i> Đã hoàn lại kho</div>
+        <div class="col-6 col-xl">
+            <div class="card border-0 shadow-sm bg-info text-white p-3 rounded-3 h-100">
+                <div class="small text-uppercase fw-bold opacity-75">SP đã bán</div>
+                <h4 class="fw-bold my-2">{{ $itemsSold }}</h4>
+            </div>
+        </div>
+        <div class="col-6 col-xl">
+            <div class="card border-0 shadow-sm bg-danger text-white p-3 rounded-3 h-100">
+                <div class="small text-uppercase fw-bold opacity-75">Hủy + Hoàn / Tỷ lệ</div>
+                <h4 class="fw-bold my-2">{{ $cancelled + $returned }} <small class="fs-6">({{ $cancelRate }}%)</small></h4>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-8 mb-4">
-            <div class="card border-0 shadow-sm rounded-3">
-                <div class="card-header bg-white fw-bold py-3"><i class="bi bi-calendar3-event text-primary"></i> Biểu đồ doanh thu theo các tháng (Năm {{ date('Y') }})</div>
+        {{-- BIỂU ĐỒ --}}
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white fw-bold py-3"><i class="bi bi-bar-chart-line text-primary"></i> Doanh thu — {{ $periodLabel }}</div>
+                <div class="card-body"><canvas id="revenueChart" style="max-height:340px"></canvas></div>
+            </div>
+        </div>
+        {{-- PHƯƠNG THỨC THANH TOÁN --}}
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white fw-bold py-3"><i class="bi bi-wallet2 text-success"></i> Phương thức thanh toán</div>
                 <div class="card-body">
-                    <canvas id="revenueChart" style="max-height: 350px;"></canvas>
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light"><tr><th>Hình thức</th><th class="text-center">Đơn</th><th class="text-end">Doanh thu</th></tr></thead>
+                        <tbody>
+                        @forelse($payments as $p)
+                            <tr>
+                                <td>{{ $pmLabel($p->payment_method) }}</td>
+                                <td class="text-center">{{ $p->cnt }}</td>
+                                <td class="text-end fw-bold">{{ number_format($p->total) }}đ</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="text-center text-muted py-3">Chưa có dữ liệu</td></tr>
+                        @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-4 mb-4">
-            <div class="card border-0 shadow-sm rounded-3">
-                <div class="card-header bg-white fw-bold py-3"><i class="bi bi-pie-chart-fill text-success"></i> Phương thức thanh toán</div>
-                <div class="card-body d-flex align-items-center justify-content-center">
-                    <div style="width: 100%; max-width: 250px;">
-                        <canvas id="paymentChart"></canvas>
-                    </div>
+    <div class="row">
+        {{-- BẢNG DOANH THU 12 THÁNG --}}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white fw-bold py-3"><i class="bi bi-calendar3 text-primary"></i> Doanh thu theo tháng (Năm {{ $year }})</div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th class="ps-3">Tháng</th><th class="text-center">Số đơn</th><th class="text-end pe-3">Doanh thu</th></tr></thead>
+                        <tbody>
+                        @foreach($monthlyTable as $row)
+                            <tr>
+                                <td class="ps-3">Tháng {{ $row['month'] }}</td>
+                                <td class="text-center">{{ $row['orders'] }}</td>
+                                <td class="text-end pe-3 fw-bold {{ $row['total'] > 0 ? 'text-success' : 'text-muted' }}">{{ number_format($row['total']) }}đ</td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {{-- TOP SẢN PHẨM --}}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white fw-bold py-3"><i class="bi bi-trophy text-warning"></i> Sản phẩm bán chạy ({{ $periodLabel }})</div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th class="ps-3">Sản phẩm</th><th class="text-center">SL bán</th><th class="text-end pe-3">Doanh thu</th></tr></thead>
+                        <tbody>
+                        @forelse($topProducts as $i => $tp)
+                            <tr>
+                                <td class="ps-3"><strong>#{{ $i + 1 }}</strong> {{ $tp->name }}</td>
+                                <td class="text-center"><span class="badge bg-success">{{ $tp->qty }}</span></td>
+                                <td class="text-end pe-3 fw-bold">{{ number_format($tp->revenue) }}đ</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="text-center text-muted py-4">Chưa có dữ liệu bán hàng</td></tr>
+                        @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -61,46 +168,16 @@
 </div>
 
 <script>
-    // 1. Cấu hình vẽ Biểu đồ Cột (Doanh thu 12 tháng)
-    const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
-    new Chart(ctxRevenue, {
+    new Chart(document.getElementById('revenueChart').getContext('2d'), {
         type: 'bar',
         data: {
-            labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
-            datasets: [{
-                label: 'Doanh thu (VND)',
-                data: @json($chartData), // Truyền mảng dữ liệu từ PHP sang JS
-                backgroundColor: 'rgba(13, 110, 253, 0.8)',
-                borderColor: 'rgb(13, 110, 253)',
-                borderWidth: 1,
-                borderRadius: 5
-            }]
+            labels: @json($labels),
+            datasets: [{ label: 'Doanh thu (VND)', data: @json($chartData), backgroundColor: 'rgba(13,110,253,0.8)', borderRadius: 5 }]
         },
         options: {
             responsive: true,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-
-    // 2. Cấu hình vẽ Biểu đồ Tròn (Cơ cấu thanh toán)
-    const ctxPayment = document.getElementById('paymentChart').getContext('2d');
-    new Chart(ctxPayment, {
-        type: 'doughnut',
-        data: {
-            labels: {!! json_encode($paymentStats->pluck('payment_method')) !!},
-            datasets: [{
-                data: @json($paymentStats->pluck('count')),
-                backgroundColor: ['#6c757d', '#0dcaf0', '#ffc107'],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => new Intl.NumberFormat('vi-VN').format(c.raw) + ' đ' } } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => new Intl.NumberFormat('vi-VN').format(v) } } }
         }
     });
 </script>
