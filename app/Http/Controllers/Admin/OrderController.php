@@ -12,53 +12,75 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    // 1. Danh sách đơn hàng
+    // Nhãn tiếng Việt cho trạng thái
+    private array $statusLabel = [
+        'pending'    => 'Chờ xác nhận',
+        'processing' => 'Đã xác nhận',
+        'shipping'   => 'Đang giao hàng',
+        'completed'  => 'Hoàn thành',
+        'returned'   => 'Hoàn trả',
+        'cancelled'  => 'Đã hủy',
+    ];
+
+    // Quy trình chuyển trạng thái hợp lệ (completed/cancelled/returned = trạng thái cuối, khóa)
+    private array $flow = [
+        'pending'    => ['processing', 'cancelled'],
+        'processing' => ['shipping', 'cancelled'],
+        'shipping'   => ['completed', 'returned'],
+        'completed'  => [],
+        'cancelled'  => [],
+        'returned'   => [],
+    ];
+
     public function index()
     {
         $orders = Order::with(['details.variant.product'])->orderBy('order_id', 'desc')->get();
         return view('admin.orders.index', compact('orders'));
     }
 
-    // 2. Giao diện Tạo đơn hàng mới (Bán tại quầy)
     public function create()
     {
         $variants = Variant::with('product')->where('status', 1)->where('stock', '>', 0)->get();
         return view('admin.orders.create', compact('variants'));
     }
 
-    // 3. Xử lý lưu đơn hàng mới vào DB
     public function store(Request $request)
     {
         $request->validate([
-            'receiver_name' => 'required',
+            'receiver_name'  => 'required',
             'receiver_phone' => 'required',
-            'variant_id' => 'required',
-            'quantity' => 'required|integer|min:1'
+            'variant_id'     => 'required',
+            'quantity'       => 'required|integer|min:1',
         ]);
 
         $variant = Variant::findOrFail($request->variant_id);
+
+        if ($variant->stock < $request->quantity) {
+            return back()->with('error', 'Không đủ hàng trong kho (chỉ còn ' . $variant->stock . ' máy).')->withInput();
+        }
+
         $totalPrice = $variant->price * $request->quantity;
 
         $order = Order::create([
-            'order_number' => 'ORD-' . strtoupper(Str::random(6)),
-            'total_amount' => $totalPrice,
-            'grand_total' => $totalPrice,
-            'receiver_name' => $request->receiver_name,
-            'receiver_phone' => $request->receiver_phone,
-            'province' => $request->province ?? 'N/A',
-            'district' => $request->district ?? 'N/A',
-            'ward' => $request->ward ?? 'N/A',
+            'order_number'     => 'ORD-' . strtoupper(Str::random(6)),
+            'total_amount'     => $totalPrice,
+            'grand_total'      => $totalPrice,
+            'receiver_name'    => $request->receiver_name,
+            'receiver_phone'   => $request->receiver_phone,
+            'province'         => $request->province ?? 'N/A',
+            'district'         => $request->district ?? 'N/A',
+            'ward'             => $request->ward ?? 'N/A',
             'shipping_address' => $request->shipping_address ?? 'Mua tại quầy',
-            'payment_method' => $request->payment_method ?? 'cash',
-            'status' => 'completed',
+            'payment_method'   => $request->payment_method ?? 'cash',
+            'status'           => 'completed',
         ]);
 
         OrderDetail::create([
-            'order_id' => $order->order_id,
+            'order_id'   => $order->order_id,
             'variant_id' => $variant->variant_id,
-            'quantity' => $request->quantity,
+            'quantity'   => $request->quantity,
             'unit_price' => $variant->price,
-            'subtotal' => $totalPrice
+            'subtotal'   => $totalPrice,
         ]);
 
         $variant->decrement('stock', $request->quantity);
@@ -67,87 +89,103 @@ class OrderController extends Controller
         return redirect()->route('admin.orders.index')->with('success', 'Đã tạo đơn hàng mới thành công!');
     }
 
-    // 4. XEM CHI TIẾT ĐƠN HÀNG & THÔNG TIN SHIPPER
     public function show($id)
     {
         $order = Order::with(['details.variant.product', 'shipping'])->findOrFail($id);
         return view('admin.orders.show', compact('order'));
     }
 
-    // 5. CẬP NHẬT TRẠNG THÁI & SHIPPER & HOÀN KHO
+    // API: tự sinh mã vận đơn theo ĐVVC (có tiền tố để dễ nhận diện)
+    public function generateTracking(Request $request)
+    {
+        $prefixMap = [
+            'Giao Hàng Nhanh' => 'GHN',
+            'GHTK'            => 'GHTK',
+            'Viettel Post'    => 'VTP',
+        ];
+        $carrier = $request->input('carrier');
+        if (!$carrier) {
+            return response()->json(['ok' => false, 'message' => 'Vui lòng chọn đơn vị vận chuyển trước.'], 422);
+        }
+        $prefix = $prefixMap[$carrier] ?? 'PS';
+        // Định dạng: PREFIX-yymmdd-RANDOM6  (vd: GHN-260607-A8K2QX)
+        $code = $prefix . '-' . now()->format('ymd') . '-' . strtoupper(Str::random(6));
+
+        return response()->json(['ok' => true, 'tracking_number' => $code]);
+    }
+
     public function update(Request $request, string $id)
     {
-        // Bắt buộc có ĐVVC + mã vận đơn khi giao/hoàn thành
-        if (in_array($request->status, ['shipping', 'completed'])) {
-            $request->validate([
-                'carrier' => 'required',
-                'tracking_number' => 'required'
-            ], [
-                'carrier.required' => 'Phải chọn Đơn vị vận chuyển trước khi giao hàng chứ!',
-                'tracking_number.required' => 'Mã Vận Đơn không được để trống khi đang giao hàng!'
-            ]);
-        }
-
-        $order = Order::with('details')->findOrFail($id);
+        $order     = Order::with('details')->findOrFail($id);
         $oldStatus = $order->status;
-        $newStatus = $request->status;
+        $newStatus = $request->input('status', $oldStatus);
 
-        // Các trạng thái "đã trả hàng về kho"
-        $returnedStates = ['cancelled', 'returned'];
+        $statusChanging = $newStatus !== $oldStatus;
 
-        // Hoàn kho khi chuyển SANG hủy / hoàn trả
-        if (in_array($newStatus, $returnedStates) && !in_array($oldStatus, $returnedStates)) {
-            foreach ($order->details as $detail) {
-                if ($variant = Variant::find($detail->variant_id)) {
-                    $variant->increment('stock', $detail->quantity);
-                    if ($variant->sold >= $detail->quantity) {
-                        $variant->decrement('sold', $detail->quantity);
+        if ($statusChanging) {
+            // 1) Đơn đã chốt (hoàn thành/hủy/hoàn trả) -> KHÓA
+            if (in_array($oldStatus, ['completed', 'cancelled', 'returned'])) {
+                return back()->with('error',
+                    'Đơn đang ở trạng thái "' . ($this->statusLabel[$oldStatus] ?? $oldStatus) . '" — đây là trạng thái cuối, không thể chuyển sang trạng thái khác.');
+            }
+
+            // 2) Chuyển sai quy trình -> báo lý do
+            if (!in_array($newStatus, $this->flow[$oldStatus] ?? [])) {
+                $allowVi = array_map(fn ($s) => $this->statusLabel[$s] ?? $s, $this->flow[$oldStatus] ?? []);
+                return back()->with('error',
+                    'Không thể chuyển từ "' . ($this->statusLabel[$oldStatus] ?? $oldStatus) . '" sang "' . ($this->statusLabel[$newStatus] ?? $newStatus) . '". '
+                    . (count($allowVi) ? 'Từ trạng thái này chỉ có thể chuyển sang: ' . implode(' hoặc ', $allowVi) . '.' : ''));
+            }
+
+            // 3) Bắt đầu giao hàng -> bắt buộc có ĐVVC + mã vận đơn
+            if ($newStatus === 'shipping') {
+                $request->validate(
+                    ['carrier' => 'required', 'tracking_number' => 'required'],
+                    [
+                        'carrier.required'         => 'Phải chọn Đơn vị vận chuyển trước khi giao hàng!',
+                        'tracking_number.required' => 'Cần có Mã vận đơn (bấm "Tạo mã tự động") trước khi giao hàng!',
+                    ]
+                );
+            }
+
+            // 4) Hoàn kho khi chuyển sang hủy / hoàn trả
+            if (in_array($newStatus, ['cancelled', 'returned'])) {
+                foreach ($order->details as $detail) {
+                    if ($variant = Variant::find($detail->variant_id)) {
+                        $variant->increment('stock', $detail->quantity);
+                        if ($variant->sold >= $detail->quantity) {
+                            $variant->decrement('sold', $detail->quantity);
+                        }
                     }
                 }
             }
+
+            $order->update(['status' => $newStatus]);
         }
 
-        // Trừ kho lại khi KHÔI PHỤC từ hủy/hoàn trả về trạng thái bán
-        if (in_array($oldStatus, $returnedStates) && !in_array($newStatus, $returnedStates)) {
-            foreach ($order->details as $detail) {
-                $variant = Variant::find($detail->variant_id);
-                if ($variant && $variant->stock >= $detail->quantity) {
-                    $variant->decrement('stock', $detail->quantity);
-                    $variant->increment('sold', $detail->quantity);
-                } else {
-                    return redirect()->back()->with('error', 'Không đủ hàng trong kho để khôi phục đơn này!');
-                }
-            }
-        }
-
-        $order->update(['status' => $newStatus]);
-
-        // Lưu bảng Shipping
-        if ($request->has('carrier') || $request->has('tracking_number')) {
+        // Lưu thông tin vận chuyển (kể cả khi không đổi trạng thái)
+        if ($request->filled('carrier') || $request->filled('tracking_number')) {
             Shipping::updateOrCreate(
                 ['order_id' => $order->order_id],
                 [
-                    'carrier' => $request->carrier,
+                    'carrier'         => $request->carrier,
                     'tracking_number' => $request->tracking_number,
-                    'shipping_fee' => $request->shipping_fee ?? 0,
-                    'status' => $newStatus
+                    'shipping_fee'    => $request->shipping_fee ?? 0,
+                    'status'          => $order->status,
                 ]
             );
         }
 
-        return redirect()->back()->with('success', 'Đã cập nhật Trạng thái & Vận chuyển!');
+        return back()->with('success',
+            $statusChanging
+                ? 'Đã chuyển trạng thái sang "' . ($this->statusLabel[$newStatus] ?? $newStatus) . '".'
+                : 'Đã lưu thông tin vận chuyển.');
     }
 
-    // 6. XÓA VĨNH VIỄN ĐƠN HÀNG
     public function destroy($id)
     {
-        $order = Order::findOrFail($id);
-
-        OrderDetail::where('order_id', $order->order_id)->delete();
-        Shipping::where('order_id', $order->order_id)->delete();
-
-        $order->delete();
-
-        return redirect()->route('admin.orders.index')->with('success', 'Đã xóa vĩnh viễn đơn hàng và các dữ liệu liên quan!');
+        // Không cho xóa đơn hàng — đơn là dữ liệu lịch sử, chỉ có thể Hủy / Hoàn trả.
+        return redirect()->route('admin.orders.index')
+            ->with('error', 'Không thể xóa đơn hàng. Đơn hàng là dữ liệu lịch sử kinh doanh — chỉ có thể chuyển sang "Đã hủy" hoặc "Hoàn trả".');
     }
 }

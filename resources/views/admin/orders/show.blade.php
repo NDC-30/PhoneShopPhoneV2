@@ -16,9 +16,7 @@
 
 <div class="content-area">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-secondary shadow-sm">
-            <i class="bi bi-arrow-left"></i> Quay lại
-        </a>
+        <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-secondary shadow-sm"><i class="bi bi-arrow-left"></i> Quay lại</a>
         <div class="d-flex gap-2">
             <button onclick="window.print()" class="btn btn-sm btn-warning fw-bold shadow-sm">
                 <i class="bi bi-printer"></i> In Hóa Đơn
@@ -33,15 +31,8 @@
     </div>
 
     @if($errors->any())
-        <div class="alert alert-danger shadow-sm border-0 mb-4">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
+        <div class="alert alert-danger shadow-sm border-0 mb-4"><ul class="mb-0">@foreach($errors->all() as $error)<li class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $error }}</li>@endforeach</ul></div>
     @endif
-
     @if(session('success'))
         <div class="alert alert-success shadow-sm"><i class="bi bi-check-circle"></i> {{ session('success') }}</div>
     @elseif(session('error'))
@@ -53,29 +44,25 @@
             @if(in_array($order->status, ['cancelled', 'returned']))
                 <div class="text-center py-3">
                     @if($order->status == 'returned')
-                        <h4 class="text-purple fw-bold mb-0" style="color:#7c3aed"><i class="bi bi-arrow-counterclockwise"></i> ĐƠN HÀNG ĐÃ HOÀN TRẢ</h4>
+                        <h4 class="fw-bold mb-0" style="color:#7c3aed"><i class="bi bi-arrow-counterclockwise"></i> ĐƠN HÀNG ĐÃ HOÀN TRẢ</h4>
                     @else
                         <h4 class="text-danger fw-bold mb-0"><i class="bi bi-x-circle"></i> ĐƠN HÀNG ĐÃ BỊ HỦY</h4>
                     @endif
-                    <p class="text-muted mt-2">Sản phẩm đã được hoàn lại vào kho.</p>
+                    <p class="text-muted mt-2">Sản phẩm đã được hoàn lại vào kho. Đây là trạng thái cuối, không thể thay đổi.</p>
                 </div>
             @else
                 <div class="order-track">
-                    <div class="track-step {{ in_array($order->status, ['pending', 'processing', 'shipping', 'completed']) ? 'completed' : '' }}">
-                        <div class="track-icon"><i class="bi bi-receipt"></i></div>
-                        <div class="track-title">Chờ Xác Nhận</div>
+                    <div class="track-step {{ in_array($order->status, ['pending','processing','shipping','completed']) ? 'completed' : '' }}">
+                        <div class="track-icon"><i class="bi bi-receipt"></i></div><div class="track-title">Chờ Xác Nhận</div>
                     </div>
-                    <div class="track-step {{ in_array($order->status, ['processing', 'shipping', 'completed']) ? 'completed' : '' }} {{ $order->status == 'processing' ? 'active' : '' }}">
-                        <div class="track-icon"><i class="bi bi-box-seam"></i></div>
-                        <div class="track-title">Đã Xác Nhận</div>
+                    <div class="track-step {{ in_array($order->status, ['processing','shipping','completed']) ? 'completed' : '' }} {{ $order->status == 'processing' ? 'active' : '' }}">
+                        <div class="track-icon"><i class="bi bi-box-seam"></i></div><div class="track-title">Đã Xác Nhận</div>
                     </div>
-                    <div class="track-step {{ in_array($order->status, ['shipping', 'completed']) ? 'completed' : '' }} {{ $order->status == 'shipping' ? 'active' : '' }}">
-                        <div class="track-icon"><i class="bi bi-truck"></i></div>
-                        <div class="track-title">Đang Giao</div>
+                    <div class="track-step {{ in_array($order->status, ['shipping','completed']) ? 'completed' : '' }} {{ $order->status == 'shipping' ? 'active' : '' }}">
+                        <div class="track-icon"><i class="bi bi-truck"></i></div><div class="track-title">Đang Giao</div>
                     </div>
                     <div class="track-step {{ $order->status == 'completed' ? 'completed active' : '' }}">
-                        <div class="track-icon"><i class="bi bi-check-lg"></i></div>
-                        <div class="track-title">Hoàn Thành</div>
+                        <div class="track-icon"><i class="bi bi-check-lg"></i></div><div class="track-title">Hoàn Thành</div>
                     </div>
                 </div>
             @endif
@@ -88,14 +75,7 @@
                 <div class="card-header bg-white fw-bold py-3"><i class="bi bi-cart"></i> Danh Sách Sản Phẩm</div>
                 <div class="card-body p-0">
                     <table class="table align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-3">Sản phẩm</th>
-                                <th>Đơn giá</th>
-                                <th>SL</th>
-                                <th class="text-end pe-3">Thành tiền</th>
-                            </tr>
-                        </thead>
+                        <thead class="table-light"><tr><th class="ps-3">Sản phẩm</th><th>Đơn giá</th><th>SL</th><th class="text-end pe-3">Thành tiền</th></tr></thead>
                         <tbody>
                             @foreach($order->details as $item)
                             <tr>
@@ -127,6 +107,13 @@
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white fw-bold py-3"><i class="bi bi-sliders"></i> Xử Lý Đơn Hàng</div>
                 <div class="card-body">
+                    @if(in_array($order->status, ['completed','cancelled','returned']))
+                        @php $lbl = ['completed'=>'Hoàn thành','cancelled'=>'Đã hủy','returned'=>'Hoàn trả'][$order->status]; @endphp
+                        <div class="alert alert-secondary mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-lock-fill fs-5"></i>
+                            <div>Đơn đang ở trạng thái <strong>"{{ $lbl }}"</strong> — đây là <strong>trạng thái cuối</strong>, không thể chuyển sang trạng thái khác.</div>
+                        </div>
+                    @else
                     <form action="{{ route('admin.orders.update', $order->order_id) }}" method="POST">
                         @csrf @method('PUT')
                         <div class="row">
@@ -134,32 +121,23 @@
                                 <label class="form-label small fw-bold">Cập nhật trạng thái</label>
                                 <select name="status" class="form-select border-primary fw-bold text-primary">
                                     @if($order->status == 'pending')
-                                        <option value="pending" selected>Chờ xác nhận</option>
-                                        <option value="processing">Xác nhận đơn (Đóng gói)</option>
-                                        <option value="cancelled">Hủy Đơn</option>
+                                        <option value="pending" selected>Chờ xác nhận (giữ nguyên)</option>
+                                        <option value="processing">→ Xác nhận đơn (đóng gói)</option>
+                                        <option value="cancelled">→ Hủy đơn</option>
                                     @elseif($order->status == 'processing')
-                                        <option value="processing" selected>Đã xác nhận (Đang đóng gói)</option>
-                                        <option value="shipping">Bắt đầu Giao hàng</option>
-                                        <option value="cancelled">Hủy Đơn</option>
+                                        <option value="processing" selected>Đã xác nhận (giữ nguyên)</option>
+                                        <option value="shipping">→ Bắt đầu giao hàng</option>
+                                        <option value="cancelled">→ Hủy đơn</option>
                                     @elseif($order->status == 'shipping')
-                                        <option value="shipping" selected>Đang giao hàng</option>
-                                        <option value="completed">Giao Thành Công</option>
-                                        <option value="cancelled">Giao Thất Bại (Hoàn Hàng)</option>
-                                    @elseif($order->status == 'completed')
-                                        <option value="completed" selected>Đã Hoàn Thành</option>
-                                        <option value="returned">Khách Hoàn Trả</option>
-                                    @elseif($order->status == 'returned')
-                                        <option value="returned" selected>Đã Hoàn Trả</option>
-                                        <option value="completed">Khôi phục (Hoàn Thành)</option>
-                                    @elseif($order->status == 'cancelled')
-                                        <option value="cancelled" selected>Đã Hủy Đơn</option>
-                                        <option value="pending">Khôi phục (Về Chờ xác nhận)</option>
+                                        <option value="shipping" selected>Đang giao hàng (giữ nguyên)</option>
+                                        <option value="completed">→ Giao thành công (Hoàn thành)</option>
+                                        <option value="returned">→ Giao thất bại / Hoàn trả</option>
                                     @endif
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label small fw-bold">Đơn vị vận chuyển</label>
-                                <select name="carrier" class="form-select">
+                                <select name="carrier" id="carrierSelect" class="form-select">
                                     <option value="">-- Chọn ĐVVC --</option>
                                     <option value="Giao Hàng Nhanh" {{ ($order->shipping->carrier ?? '') == 'Giao Hàng Nhanh' ? 'selected' : '' }}>Giao Hàng Nhanh (GHN)</option>
                                     <option value="GHTK" {{ ($order->shipping->carrier ?? '') == 'GHTK' ? 'selected' : '' }}>Giao Hàng Tiết Kiệm</option>
@@ -167,16 +145,16 @@
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label small fw-bold">Mã Vận Đơn (Tracking)</label>
-                                <input type="text" name="tracking_number" class="form-control" value="{{ $order->shipping->tracking_number ?? '' }}" placeholder="VD: GHN123456789">
+                                <label class="form-label small fw-bold">Mã vận đơn (Tracking)</label>
+                                <input type="text" name="tracking_number" id="trackingInput" class="form-control" value="{{ $order->shipping->tracking_number ?? '' }}" placeholder="Tự tạo khi chọn ĐVVC" readonly>
+                                <small class="text-muted">Mã vận đơn <strong>tự sinh</strong> ngay khi bạn chọn Đơn vị vận chuyển (có tiền tố hãng để dễ nhận diện).</small>
                             </div>
                         </div>
                         <div class="text-end mt-2">
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="bi bi-save me-1"></i> Lưu Thay Đổi
-                            </button>
+                            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Lưu Thay Đổi</button>
                         </div>
                     </form>
+                    @endif
                 </div>
             </div>
         </div>
@@ -186,9 +164,7 @@
                 <div class="card-header bg-white fw-bold py-3"><i class="bi bi-person-lines-fill"></i> Thông Tin Khách Hàng</div>
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center fw-bold me-3" style="width: 45px; height: 45px;">
-                            {{ mb_substr($order->receiver_name, 0, 1) }}
-                        </div>
+                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center fw-bold me-3" style="width: 45px; height: 45px;">{{ mb_substr($order->receiver_name, 0, 1) }}</div>
                         <div>
                             <h6 class="mb-0 fw-bold">{{ $order->receiver_name }}</h6>
                             <small class="text-muted"><i class="bi bi-telephone-fill"></i> {{ $order->receiver_phone }}</small>
@@ -199,30 +175,23 @@
                         <div class="small">{{ $order->shipping_address }}</div>
                         <div class="small text-muted">{{ $order->ward }}, {{ $order->district }}, {{ $order->province }}</div>
                     </div>
+                    @if($order->shipping && $order->shipping->tracking_number)
+                        <div class="mt-3 p-2 rounded border bg-white">
+                            <div class="small text-muted">Vận chuyển: <strong>{{ $order->shipping->carrier }}</strong></div>
+                            <div class="small">Mã vận đơn: <strong class="text-primary">{{ $order->shipping->tracking_number }}</strong></div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white fw-bold py-3"><i class="bi bi-credit-card-2-front"></i> Chi Tiết Thanh Toán</div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2 small">
-                        <span class="text-muted">Tổng tiền hàng:</span>
-                        <strong class="text-dark">{{ number_format($order->total_amount) }}đ</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2 small">
-                        <span class="text-muted">Phí vận chuyển:</span>
-                        <strong class="text-dark">{{ number_format($order->shipping_fee ?? 0) }}đ</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3 small text-success">
-                        <span>Voucher giảm giá:</span>
-                        <strong>-{{ number_format($order->discount_amount) }}đ</strong>
-                    </div>
+                    <div class="d-flex justify-content-between mb-2 small"><span class="text-muted">Tổng tiền hàng:</span><strong class="text-dark">{{ number_format($order->total_amount) }}đ</strong></div>
+                    <div class="d-flex justify-content-between mb-2 small"><span class="text-muted">Phí vận chuyển:</span><strong class="text-dark">{{ number_format($order->shipping_fee ?? 0) }}đ</strong></div>
+                    <div class="d-flex justify-content-between mb-3 small text-success"><span>Voucher giảm giá:</span><strong>-{{ number_format($order->discount_amount) }}đ</strong></div>
                     <hr class="text-muted">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="fw-bold">Khách Cần Trả:</span>
-                        <strong class="text-danger fs-4">{{ number_format($order->grand_total) }}đ</strong>
-                    </div>
-
+                    <div class="d-flex justify-content-between align-items-center mb-3"><span class="fw-bold">Khách Cần Trả:</span><strong class="text-danger fs-4">{{ number_format($order->grand_total) }}đ</strong></div>
                     <div class="bg-light p-2 rounded text-center border">
                         <span class="small text-muted d-block mb-1">Phương thức thanh toán</span>
                         @php $pm = strtolower($order->payment_method ?? ''); @endphp
@@ -241,4 +210,28 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const carrierSelect = document.getElementById('carrierSelect');
+    const trackingInput = document.getElementById('trackingInput');
+    if (!carrierSelect || !trackingInput) return;
+
+    // Tự sinh mã vận đơn NGAY khi chọn Đơn vị vận chuyển
+    carrierSelect.addEventListener('change', async function () {
+        const carrier = this.value;
+        if (!carrier) { trackingInput.value = ''; return; }
+        try {
+            const url = "{{ route('admin.orders.tracking.generate') }}?carrier=" + encodeURIComponent(carrier);
+            const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const data = await res.json();
+            if (data.ok) {
+                trackingInput.value = data.tracking_number;
+            } else {
+                alert(data.message || 'Không tạo được mã vận đơn.');
+            }
+        } catch (e) { alert('Có lỗi khi tạo mã vận đơn, thử lại.'); }
+    });
+});
+</script>
 @endsection

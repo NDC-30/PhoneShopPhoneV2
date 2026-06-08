@@ -22,11 +22,8 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($cred, $request->boolean('remember'))) {
+        if (Auth::guard('web')->attempt($cred, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            if (Auth::user()->isAdmin()) {
-                return redirect()->intended('/admin');
-            }
             return redirect()->intended(route('home'));
         }
 
@@ -58,13 +55,13 @@ class AuthController extends Controller
             'is_active' => 1,
         ]);
 
-        Auth::login($user);
+        Auth::guard('web')->login($user);
         return redirect()->route('home')->with('success', 'Đăng ký thành công!');
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('home');

@@ -4,22 +4,25 @@
 @section('content')
 <div class="container">
 
-    {{-- HERO --}}
-    <section class="hero">
-        <div class="hero-copy">
-            <span class="eyebrow">Bộ sưu tập 2026</span>
-            <h1>Công nghệ trong tầm tay.</h1>
-            <p>Điện thoại chính hãng, nguyên seal, bảo hành toàn quốc. Trải nghiệm mua sắm tối giản, giao nhanh, đổi trả dễ dàng.</p>
-            <div class="hero-actions">
-                <a href="{{ route('shop.index') }}" class="btn btn-dark">Mua ngay</a>
-                <a href="{{ route('shop.index', ['sort' => 'newest']) }}" class="btn btn-line">Hàng mới về</a>
-            </div>
-        </div>
-        @php
-$heroImg = 'https://cdn.images.express.co.uk/img/dynamic/59/940x/secondary/best-iphone-15-pro-deals-uk-4962371.jpg?r=1695486336091';
-@endphp
+    {{-- BANNER CAROUSEL (CHỈ HÌNH ẢNH) --}}
+    @php
+    // Danh sách URL banner hình ảnh (Bác có thể thay đổi list này theo ý muốn)
+    $banners = [
+        // Banner hiện tại (S26 Ultra)
+        'https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:100/plain/https://media-asset.cellphones.com.vn/dashboard-v1/manage-banner/s26-ultra-home-0626.png',
+        // Thêm một banner demo khác (Galaxy Fold6)
+        'https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:100/plain/https://media-asset.cellphones.com.vn/dashboard-v1/manage-banner/690x300_iPhone17ProMax_0626.png',
+        // Thêm một banner demo khác (Galaxy S24 Series)
+        'https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:100/plain/https://media-asset.cellphones.com.vn/dashboard-v1/manage-banner/Oppofin%20x9%20ultra_oppen-home.png'
+    ];
+    @endphp
 
-<img src="{{ $heroImg }}" alt="iPhone 15 Pro">
+    <section class="banner-carousel" style="overflow: hidden; margin-bottom: 20px;">
+        @foreach($banners as $bannerUrl)
+            <div class="item" style="display: {{ $loop->first ? 'block' : 'none' }};">
+                <img src="{{ $bannerUrl }}" alt="Banner {{ $loop->iteration }}" style="width: 100%; height: auto; display: block;">
+            </div>
+        @endforeach
     </section>
 
     {{-- BRAND CHIPS --}}
@@ -67,4 +70,30 @@ $heroImg = 'https://cdn.images.express.co.uk/img/dynamic/59/940x/secondary/best-
     </section>
 
 </div>
+
+{{-- SCRIPT CHUYỂN BANNER TỰ ĐỘNG --}}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Lấy tất cả các item banner
+        const banners = document.querySelectorAll('.banner-carousel .item');
+        let currentBannerIndex = 0;
+
+        // Hàm ẩn banner hiện tại và hiện banner tiếp theo
+        function showNextBanner() {
+            // Ẩn banner hiện tại
+            banners[currentBannerIndex].style.display = 'none';
+            // Tính toán index của banner tiếp theo
+            currentBannerIndex = (currentBannerIndex + 1) % banners.length;
+            // Hiện banner tiếp theo
+            banners[currentBannerIndex].style.display = 'block';
+        }
+
+        // Chỉ chạy nếu có nhiều hơn 1 banner
+        if (banners.length > 1) {
+            // Tự động chuyển banner sau mỗi 3 giây (3000 ms)
+            setInterval(showNextBanner, 3000); 
+        }
+    });
+</script>
+
 @endsection

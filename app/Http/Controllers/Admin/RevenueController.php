@@ -4,47 +4,117 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RevenueController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Tính toán các số liệu tổng quan (Chỉ tính đơn đã hoàn thành)
-        $totalRevenue = Order::where('status', 'completed')->sum('grand_total');
-        $totalOrders = Order::where('status', 'completed')->count();
-        $todayRevenue = Order::where('status', 'completed')->whereDate('created_at', date('Y-m-d'))->sum('grand_total');
-        $cancelledOrders = Order::where('status', 'cancelled')->count();
+        return view('admin.revenue.index', $this->buildReport($request));
+    }
 
-        // 2. Thống kê doanh thu theo 12 tháng trong năm hiện tại
-        $monthlyData = Order::where('status', 'completed')
-            ->selectRaw('MONTH(created_at) as month, SUM(grand_total) as total')
-            ->whereYear('created_at', date('Y'))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->pluck('total', 'month')
-            ->toArray();
+    // Bản in / xuất PDF (trang đứng riêng, tự bật hộp thoại in -> Lưu thành PDF)
+    public function printReport(Request $request)
+    {
+        return view('admin.revenue.print', $this->buildReport($request));
+    }
 
-        // Đảm bảo tháng nào không có tiền thì hiển thị số 0 chứ không bị rỗng
-        $chartData = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $chartData[] = $monthlyData[$i] ?? 0;
+    /** Tính toàn bộ số liệu cho báo cáo theo kỳ Năm -> Tháng -> Ngày */
+    private function buildReport(Request $request): array
+    {
+        $year  = (int) $request->input('year', now()->year);
+        $month = (int) $request->input('month', 0);  // 0 = cả năm
+        $day   = (int) $request->input('day', 0);     // 0 = cả tháng
+
+        $minYear = (int) (Order::whereNotNull('created_at')->min(DB::raw('YEAR(created_at)')) ?: now()->year);
+        $years   = range(now()->year, min($minYear, now()->year));
+
+        // Hàm áp điều kiện kỳ cho query Order
+        $applyScope = function ($q, string $col = 'created_at') use ($year, $month, $day) {
+            $q->whereYear($col, $year);
+            if ($month > 0) $q->whereMonth($col, $month);
+            if ($month > 0 && $day > 0) $q->whereDay($col, $day);
+            return $q;
+        };
+
+        // ===== KPI trong kỳ (đơn đã hoàn thành) =====
+        $completed = $applyScope(Order::where('status', 'completed'));
+        $periodRevenue = (clone $completed)->sum('grand_total');
+        $periodOrders  = (clone $completed)->count();
+        $aov           = $periodOrders > 0 ? $periodRevenue / $periodOrders : 0;
+
+        $cancelled = $applyScope(Order::where('status', 'cancelled'))->count();
+        $returned  = $applyScope(Order::where('status', 'returned'))->count();
+        $totalAllStatus = $applyScope(Order::query())->count();
+        $cancelRate = $totalAllStatus > 0 ? round(($cancelled + $returned) / $totalAllStatus * 100, 1) : 0;
+
+        // Số sản phẩm đã bán trong kỳ
+        $detailBase = DB::table('order_details')
+            ->join('orders', 'order_details.order_id', '=', 'orders.order_id')
+            ->where('orders.status', 'completed');
+        $applyScope($detailBase, 'orders.created_at');
+        $itemsSold = (clone $detailBase)->sum('order_details.quantity');
+
+        // ===== Biểu đồ doanh thu theo kỳ =====
+        $chartBase = $applyScope(Order::where('status', 'completed'));
+        if ($month > 0 && $day > 0) {
+            $labels    = ["Ngày $day/$month/$year"];
+            $chartData = [(float) (clone $chartBase)->sum('grand_total')];
+            $periodLabel = "Ngày $day/$month/$year";
+        } elseif ($month > 0) {
+            $rows = (clone $chartBase)->selectRaw('DAY(created_at) as k, SUM(grand_total) as total')
+                ->groupBy('k')->pluck('total', 'k')->toArray();
+            $days = Carbon::create($year, $month, 1)->daysInMonth;
+            $labels = [];
+            $chartData = [];
+            for ($i = 1; $i <= $days; $i++) { $labels[] = (string) $i; $chartData[] = (float) ($rows[$i] ?? 0); }
+            $periodLabel = "Tháng $month/$year";
+        } else {
+            $rows = (clone $chartBase)->selectRaw('MONTH(created_at) as k, SUM(grand_total) as total')
+                ->groupBy('k')->pluck('total', 'k')->toArray();
+            $labels = [];
+            $chartData = [];
+            for ($i = 1; $i <= 12; $i++) { $labels[] = 'Tháng ' . $i; $chartData[] = (float) ($rows[$i] ?? 0); }
+            $periodLabel = "Năm $year";
         }
 
-        // 3. Thống kê tỷ lệ Phương thức thanh toán (COD vs Chuyển khoản)
-        $paymentStats = Order::where('status', 'completed')
-            ->select('payment_method', DB::raw('count(*) as count'))
-            ->groupBy('payment_method')
+        // ===== Bảng doanh thu 12 tháng của năm (tổng quan) =====
+        $monthAgg = Order::where('status', 'completed')->whereYear('created_at', $year)
+            ->selectRaw('MONTH(created_at) as m, COUNT(*) as cnt, SUM(grand_total) as total')
+            ->groupBy('m')->get()->keyBy('m');
+        $monthlyTable = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $monthlyTable[] = [
+                'month'  => $i,
+                'orders' => (int) ($monthAgg[$i]->cnt ?? 0),
+                'total'  => (float) ($monthAgg[$i]->total ?? 0),
+            ];
+        }
+
+        // ===== Top sản phẩm bán chạy trong kỳ =====
+        $topProducts = (clone $detailBase)
+            ->join('variants', 'order_details.variant_id', '=', 'variants.variant_id')
+            ->join('products', 'variants.product_id', '=', 'products.product_id')
+            ->select('products.name',
+                DB::raw('SUM(order_details.quantity) as qty'),
+                DB::raw('SUM(order_details.subtotal) as revenue'))
+            ->groupBy('products.product_id', 'products.name')
+            ->orderByDesc('qty')
+            ->limit(8)
             ->get();
 
-        return view('admin.revenue.index', compact(
-            'totalRevenue',
-            'totalOrders',
-            'todayRevenue',
-            'cancelledOrders',
-            'chartData',
-            'paymentStats'
-        ));
+        // ===== Cơ cấu phương thức thanh toán trong kỳ =====
+        $payments = $applyScope(Order::where('status', 'completed'))
+            ->select('payment_method', DB::raw('COUNT(*) as cnt'), DB::raw('SUM(grand_total) as total'))
+            ->groupBy('payment_method')->get();
+
+        return compact(
+            'year', 'month', 'day', 'years',
+            'periodLabel', 'periodRevenue', 'periodOrders', 'aov',
+            'cancelled', 'returned', 'cancelRate', 'itemsSold',
+            'labels', 'chartData', 'monthlyTable', 'topProducts', 'payments'
+        );
     }
 }
