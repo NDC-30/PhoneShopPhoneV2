@@ -23,12 +23,12 @@
             <button onclick="window.print()" class="btn btn-sm btn-warning fw-bold shadow-sm">
                 <i class="bi bi-printer"></i> In Hóa Đơn
             </button>
-            <form action="{{ route('admin.orders.destroy', $order->order_id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này?');">
+            {{-- <form action="{{ route('admin.orders.destroy', $order->order_id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này?');">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-sm btn-danger fw-bold shadow-sm">
                     <i class="bi bi-trash"></i> Xóa Đơn Hàng
                 </button>
-            </form>
+            </form> --}}
         </div>
     </div>
 

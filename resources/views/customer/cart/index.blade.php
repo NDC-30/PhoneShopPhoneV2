@@ -25,11 +25,73 @@
                     @foreach ($items as $item)
                         @php $v = $item->variant; @endphp
                         <div class="cart-item">
+
+    <a href="{{ route('product.show', $v->product->slug ?? $v->product->product_id) }}"
+        class="thumb">
+        <img src="{{ $v->image }}" alt="{{ $v->product->name }}">
+    </a>
+
+    <div class="meta">
+
+        <div class="info">
+            <h4>{{ $v->product->name }}</h4>
+
+            <div class="attrs">
+                <div class="attr-item">
+                    <strong>Màu:</strong>
+                    <span>{{ $v->color }}</span>
+                </div>
+
+                <div class="attr-item">
+                    <strong>RAM:</strong>
+                    <span>{{ $v->ram }}</span>
+                </div>
+
+                <div class="attr-item">
+                    <strong>ROM:</strong>
+                    <span>{{ $v->rom }}</span>
+                </div>
+            </div>
+
+            <div class="unit">
+                {{ number_format($v->price, 0, ',', '.') }}₫
+            </div>
+
+            <form method="POST"
+                action="{{ route('cart.remove') }}"
+                onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')">
+                @csrf
+                <input type="hidden" name="variant_id" value="{{ $v->variant_id }}">
+                <button class="remove" type="submit">Xóa</button>
+            </form>
+        </div>
+
+        <div class="right">
+            <div class="qty">
+                <button type="button" onclick="stepQty({{ $v->variant_id }}, -1)">−</button>
+
+                <input type="number"
+                    min="1"
+                    id="qty-{{ $v->variant_id }}"
+                    value="{{ $item->quantity }}"
+                    onchange="updateQty({{ $v->variant_id }}, this.value)">
+
+                <button type="button" onclick="stepQty({{ $v->variant_id }}, 1)">+</button>
+            </div>
+
+            <div class="line-total">
+                {{ number_format($item->line_total, 0, ',', '.') }}₫
+            </div>
+        </div>
+
+    </div>
+
+</div>
                             <a href="{{ route('product.show', $v->product->slug ?? $v->product->product_id) }}"
                                 class="thumb">
                                 <img src="{{ $v->image }}" alt="{{ $v->product->name }}" width="380px" height="380px">
                             </a>
-                            <div class="meta">
+                            {{-- <div class="meta">
                                 <h4>{{ $v->product->name }}</h4>
                                 <div class="meta">
                                     <div class="attrs mt-2">
@@ -77,7 +139,7 @@
                                     </div>
                                     <div class="line-total">{{ number_format($item->line_total, 0, ',', '.') }}₫</div>
                                 </div>
-                            </div>
+                            </div> --}}
                     @endforeach
 
                     <form method="POST" action="{{ route('cart.clear') }}" style="margin-top:18px"

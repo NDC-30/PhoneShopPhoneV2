@@ -86,13 +86,13 @@
                                     <i class="bi bi-eye"></i> Xem
                                 </a>
 
-                                <form action="{{ route('admin.orders.destroy', $order->order_id) }}" method="POST" onsubmit="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này không? Mọi dữ liệu liên quan sẽ bị mất!');">
+                                {{-- <form action="{{ route('admin.orders.destroy', $order->order_id) }}" method="POST" onsubmit="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này không? Mọi dữ liệu liên quan sẽ bị mất!');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa đơn hàng">
                                         <i class="bi bi-trash"></i>
                                     </button>
-                                </form>
+                                </form> --}}
                             </div>
                         </td>
                     </tr>
