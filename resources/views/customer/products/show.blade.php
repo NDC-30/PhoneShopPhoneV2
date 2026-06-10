@@ -17,7 +17,7 @@
                 <img id="mainImg" src="{{ $gallery->first() }}" alt="{{ $product->name }}">
             </div>
             @if($gallery->count() > 1)
-            <div class="gallery-thumbs">
+            <div class="gallery-thumbs" id="galleryThumbs">
                 @foreach($gallery->take(6) as $i => $g)
                     <button class="thumb-btn {{ $i===0?'active':'' }}" onclick="setMain(this,'{{ $g }}')">
                         <img src="{{ $g }}" alt="">
@@ -213,8 +213,9 @@ function renderVariant(){
         offEl.style.display='inline'; offEl.textContent='-'+off+'%';
     } else { cmpEl.style.display='none'; offEl.style.display='none'; }
 
-    if(currentVariant.image){ document.getElementById('mainImg').src = currentVariant.image; }
-
+if(currentVariant.images){
+    renderGallery(currentVariant.images);
+}
     if(currentVariant.stock > 0){
         stockEl.className='pd-stock'; stockEl.innerHTML='<i></i><span>Còn hàng ('+currentVariant.stock+')</span>';
         addBtn.disabled=false; buyBtn.disabled=false;
@@ -281,5 +282,25 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+function renderGallery(images){
+
+    if(!images || !images.length) return;
+
+    document.getElementById('mainImg').src = images[0];
+
+    let html = '';
+
+    images.forEach((img,index)=>{
+
+        html += `
+            <button class="thumb-btn ${index===0?'active':''}"
+                onclick="setMain(this,'${img}')">
+                <img src="${img}">
+            </button>
+        `;
+    });
+
+    document.getElementById('galleryThumbs').innerHTML = html;
+}
 </script>
 @endpush

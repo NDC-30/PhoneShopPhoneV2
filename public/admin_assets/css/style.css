@@ -35,7 +35,7 @@ body {
 /* Wrapper & Layout */
 .wrapper {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 /* Sidebar Mới */
@@ -204,7 +204,8 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-y: auto;
 }
 
 /* Top Bar */

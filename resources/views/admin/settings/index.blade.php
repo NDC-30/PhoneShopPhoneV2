@@ -1,7 +1,7 @@
 @extends('admin.layouts.master')
 @section('title', 'Cài đặt Tài khoản')
-@section('page_title', 'Hồ Sơ Administrator')
-
+@section('page_title', 'Cài đặt Tài khoản')
+dd($request->all());
 @section('content')
 <div class="content-area">
     
@@ -31,10 +31,10 @@
                         
                         <div class="position-relative d-inline-block mb-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto shadow border border-3 border-white" style="width: 120px; height: 120px; overflow: hidden; background-color: #0d6efd;">
-                                @if(Auth::user()->avatar && file_exists(public_path('storage/' . Auth::user()->avatar)))
-                                    <img id="avatarPreview" src="{{ asset('storage/' . Auth::user()->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                @if($user->avatar && file_exists(public_path('storage/' . $user->avatar)))
+                                    <img id="avatarPreview" src="{{ asset('storage/' . $user->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 @else
-                                    <span id="avatarText" class="text-white fw-bold" style="font-size: 45px;">{{ mb_substr(Auth::user()->fullname ?? 'A', 0, 1) }}</span>
+                                    <span id="avatarText" class="text-white fw-bold" style="font-size: 45px;">{{ mb_substr($user->fullname ?? 'A', 0, 1) }}</span>
                                     <img id="avatarPreview" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                                 @endif
                             </div>
@@ -48,8 +48,8 @@
                             <small class="text-muted d-block mt-1">Định dạng: JPG, PNG, JPEG. Tối đa 2MB</small>
                         </div>
 
-                        <h5 class="fw-bold mb-1">{{ Auth::user()->fullname ?? 'Administrator' }}</h5>
-                        <p class="text-muted small mb-3"><i class="bi bi-envelope-fill me-1"></i> {{ Auth::user()->email ?? 'admin@phoneshop.com' }}</p>
+                        <h5 class="fw-bold mb-1">{{ $user->fullname ?? 'Administrator' }}</h5>
+                        <p class="text-muted small mb-3"><i class="bi bi-envelope-fill me-1"></i> {{ $user->email ?? 'admin@phoneshop.com' }}</p>
                         
                         <span class="badge bg-success px-3 py-2 rounded-pill"><i class="bi bi-shield-check me-1"></i> Quản trị viên</span>
                         
@@ -57,7 +57,7 @@
                         
                         <div class="d-flex justify-content-between text-start small px-2">
                             <span class="text-muted">Ngày tham gia:</span>
-                            <span class="fw-bold">{{ Auth::user()->created_at ? date('d/m/Y', strtotime(Auth::user()->created_at)) : 'N/A' }}</span>
+                            <span class="fw-bold">{{ $user->created_at ? date('d/m/Y', strtotime($user->created_at)) : 'N/A' }}</span>
                         </div>
                     </div>
                 </div>
@@ -73,15 +73,15 @@
                         <div class="row mb-4">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
-                                <input type="text" name="fullname" class="form-control" value="{{ Auth::user()->fullname }}" required>
+                                <input type="text" name="fullname" class="form-control" value="{{ $user->fullname }}" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Địa chỉ Email </label>
-                                <input type="email" class="form-control bg-light" value="{{ Auth::user()->email }}" disabled>
+                                <input type="email" class="form-control bg-light" value="{{ $user->email }}" disabled>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold">Số điện thoại</label>
-                                <input type="text" name="phone" class="form-control" value="{{ Auth::user()->phone ?? '' }}" placeholder="Nhập số điện thoại liên hệ...">
+                                <input type="text" name="phone" class="form-control" value="{{ $user->phone ?? '' }}" placeholder="Nhập số điện thoại liên hệ...">
                             </div>
                         </div>
 

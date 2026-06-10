@@ -106,7 +106,7 @@
                 <div class="card-body">
                     <h6 class="fw-bold mb-3">Top 5 Sản Phẩm Bán Chạy</h6>
                     @if($bestSellingProducts->count())
-                        <div style="height: 300px; position: relative;">
+                        <div style="height: {{ max(170, $bestSellingProducts->count() * 72) }}px; position: relative;">
                             <canvas id="topBarChart"></canvas>
                         </div>
                     @else
@@ -232,14 +232,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     data: @json($topData),
                     backgroundColor: '#b8501f',
                     borderRadius: 5,
-                    barThickness: 22
+                    categoryPercentage: 0.8,
+                    barPercentage: 0.95,
+                    maxBarThickness: 54
                 }]
             },
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: { padding: { right: 36 } },
+                layout: { padding: { right: 48 } },
                 plugins: {
                     legend: { display: false },
                     datalabels: {
@@ -248,7 +250,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     },
                     tooltip: { callbacks: { label: c => c.raw + ' sản phẩm' } }
                 },
-                scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 } },
+                    y: { ticks: { autoSkip: false, font: { size: 12 } } }
+                }
             }
         });
     }

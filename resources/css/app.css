@@ -29,13 +29,13 @@ html, body {
 }
 
 body {
-    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* Wrapper & Layout */
 .wrapper {
-    display: flex;
-    height: 100vh;
+    display:flex;
+    min-height:100vh;
 }
 
 /* Sidebar */
@@ -110,8 +110,8 @@ body {
     margin-left: 260px;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-y: auto;
 }
 
 /* Top Bar */
